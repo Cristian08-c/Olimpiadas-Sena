@@ -3,11 +3,29 @@
 Todos los valores mágicos (rutas, límites, duraciones, branding) viven aquí.
 Los módulos y los templates leen de esta clase en vez de tener valores
 hardcodeados en distintos sitios.
+
+La carga de `.env` vive aquí (no en wsgi.py) para que `run.py` (dev server)
+y `wsgi.py` (Apache) lean la MISMA SECRET_KEY. Sin esto, las cookies firmadas
+por uno no se validan en el otro y aparece un 401 fantasma en las APIs.
 """
 import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+# ---------------------------------------------------------------------------
+# Carga de .env — un solo lugar para todos los entry points (run.py, wsgi.py)
+# ---------------------------------------------------------------------------
+_env_file = BASE_DIR.parent / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if not _line or _line.startswith("#") or "=" not in _line:
+            continue
+        _k, _v = _line.split("=", 1)
+        # setdefault: no sobrescribe variables de entorno del SO (ej. Docker)
+        os.environ.setdefault(_k.strip(), _v.strip())
 
 
 class Config:
