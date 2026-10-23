@@ -1,75 +1,48 @@
 # --------------------------------------------------------------------------
-# app.py - Backend con Flask para Olimpiadas (Versión con Admin - COMPLETO)
+# app.py - Backend con Flask para Olimpiadas
 # --------------------------------------------------------------------------
-
 import os
 import re
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
-import mysql.connector
-from mysql.connector import errorcode
 import json
-from datetime import date, datetime, timedelta
-import pandas as pd
-from werkzeug.utils import secure_filename
 import uuid
+from datetime import date, datetime, timedelta
 
-# --- CONFIGURACIÓN DE RUTAS A PRUEBA DE ERRORES ---
-basedir = os.path.abspath(os.path.dirname(__file__))
+import mysql.connector
+import pandas as pd
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__,
-            template_folder=os.path.join(basedir, 'templates'),
-            static_folder=os.path.join(basedir, 'static'))
-app.secret_key = 'olimpiadas_sena_secret_key'
+from .config import Config
+from .db import get_db_connection
 
-# --- Configuración para Carga de Archivos ---
-UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
-IMAGE_UPLOAD_FOLDER = os.path.join(basedir, 'static', 'img') # Carpeta para imágenes de preguntas
-ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['IMAGE_UPLOAD_FOLDER'] = IMAGE_UPLOAD_FOLDER
+# --- App Flask ---
+app = Flask(
+    __name__,
+    template_folder=Config.TEMPLATE_FOLDER,
+    static_folder=Config.STATIC_FOLDER,
+)
+app.config.from_object(Config)
+app.secret_key = Config.SECRET_KEY
 
-# Crear carpetas si no existen
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-if not os.path.exists(IMAGE_UPLOAD_FOLDER):
-    os.makedirs(IMAGE_UPLOAD_FOLDER)
+# --- Rutas de archivos (compatibilidad con el código existente) ---
+UPLOAD_FOLDER = Config.UPLOAD_FOLDER
+IMAGE_UPLOAD_FOLDER = Config.IMAGE_UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = Config.ALLOWED_EXCEL_EXTENSIONS
+ALLOWED_IMAGE_EXTENSIONS = Config.ALLOWED_IMAGE_EXTENSIONS
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(IMAGE_UPLOAD_FOLDER, exist_ok=True)
+
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def allowed_image_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
-
-# --- Configuración de Base de Datos ---
-DB_CONFIG = {
-    'user': 'root',
-    'password': '0323',
-    'host': 'localhost',
-    'database': 'olimpiadas',
-    'raise_on_warnings': True,
-    'use_pure': True,
-    'charset': 'utf8mb4',
-    'use_unicode': True
-}
-
-def get_db_connection():
-    """Crea y retorna una conexión a la base de datos."""
-    try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        # Establecer el charset después de la conexión
-        cursor = conn.cursor()
-        cursor.execute("SET NAMES utf8mb4")
-        cursor.execute("SET CHARACTER SET utf8mb4")
-        cursor.execute("SET character_set_connection=utf8mb4")
-        cursor.close()
-        return conn
-    except mysql.connector.Error as err:
-        print(f"Error de base de datos: {err}")
-        return None
 
 # --- Rutas de Autenticación y Vistas Generales ---
 
@@ -1698,7 +1671,16 @@ def asignar_fase2():
         cursor.close()
         conn.close()
 
-if __name__ == "__main__":
-    # Al usar host='0.0.0.0', Flask será accesible desde otras máquinas en la misma red.
-    app.run(host='0.0.0.0', debug=True, port=5000)
+# --------------------------------------------------------------------------
+# Factory para wsgi.py y run.py
+# --------------------------------------------------------------------------
+def create_app(config_object=None):
+    """Factory para mod_wsgi y entornos que necesitan un entrypoint.
 
+    En este paso devuelve la app ya configurada a nivel de módulo.
+    En pasos posteriores moveremos las rutas a blueprints y esta función
+    construirá la app desde cero.
+    """
+    if config_object is not None:
+        app.config.from_object(config_object)
+    return app

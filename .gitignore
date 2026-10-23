@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Entorno
+.env
+*.env
+
+# Uploads y volcados
+uploads/
+debug_dump_*.txt
+snapshot*.txt
+
+# IDE
+.vscode/
+.idea/
+.DS_Store

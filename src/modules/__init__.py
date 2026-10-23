@@ -1,0 +1,1 @@
+"""Módulos de la aplicación: blueprints por rol y utilidades compartidas."""
