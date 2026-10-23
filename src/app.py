@@ -44,65 +44,25 @@ def allowed_image_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
-# --- Rutas de Autenticación y Vistas Generales ---
+# --------------------------------------------------------------------------
+# Factory para wsgi.py y run.py
+# --------------------------------------------------------------------------
+def create_app(config_object=None):
+    """Factory para mod_wsgi y entornos que necesitan un entrypoint.
 
-@app.route("/")
-def index():
-    if 'user_role' in session:
-        if session['user_role'] == 'instructor':
-            return redirect(url_for('inicio_instructor'))
-        elif session['user_role'] == 'aprendiz':
-            return redirect(url_for('aprendiz_dashboard'))
-        elif session['user_role'] == 'admin':
-            return redirect(url_for('admin_dashboard'))
+    En este paso registra el blueprint de auth. Los demás módulos (admin,
+    aprendiz, instructor) siguen en este archivo; se moverán en pasos
+    posteriores.
+    """
+    if config_object is not None:
+        app.config.from_object(config_object)
+
+    # Blueprints
+    from .modules.auth import bp as auth_bp
+    app.register_blueprint(auth_bp)
+
+    return app
     
-    return render_template('index.html')
-
-
-@app.route("/login", methods=['POST'])
-def login():
-    document = request.form.get('document')
-    password = request.form.get('password')
-    if not document or not password:
-        return jsonify({'success': False, 'message': 'Documento y contraseña son requeridos.'})
-
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'success': False, 'message': 'Error de conexión con la base de datos.'})
-    
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute("SELECT identificacion, nombre, apellido, rol FROM personas WHERE identificacion = %s AND contraseña = %s AND estado = 'activo'", (document, password))
-        user = cursor.fetchone()
-
-        if user:
-            session['user_id'] = user['identificacion']
-            session['user_name'] = user['nombre']
-            session['user_apellido'] = user['apellido']
-            session['user_role'] = user['rol']
-            
-            if user['rol'] == 'instructor': 
-                redirect_url = url_for('inicio_instructor')
-            elif user['rol'] == 'aprendiz': 
-                redirect_url = url_for('aprendiz_dashboard')
-            elif user['rol'] == 'admin': 
-                redirect_url = url_for('admin_dashboard')
-            else: 
-                redirect_url = url_for('index')
-
-            return jsonify({'success': True, 'message': 'Inicio de sesión exitoso.', 'redirect': redirect_url})
-        else:
-            return jsonify({'success': False, 'message': 'Credenciales incorrectas o usuario inactivo.'})
-    except mysql.connector.Error as err:
-        return jsonify({'success': False, 'message': f'Error en la consulta: {err}'})
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
 
 # --- Rutas de Panel de Administrador ---
 
@@ -110,7 +70,7 @@ def logout():
 @app.route('/admin/upload', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     nombre_completo = f"{session.get('user_name', '')} {session.get('user_apellido', '')}".strip()
     
@@ -340,7 +300,7 @@ def upload_file():
 @app.route('/admin/fichas')
 def admin_fichas():
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
     
     nombre_completo = f"{session.get('user_name', '')} {session.get('user_apellido', '')}".strip()
     
@@ -399,7 +359,7 @@ def admin_fichas():
 @app.route('/admin/ficha/<int:ficha_num>')
 def ver_ficha(ficha_num):
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     nombre_completo = f"{session.get('user_name', '')} {session.get('user_apellido', '')}".strip()
 
@@ -451,7 +411,7 @@ def ver_ficha(ficha_num):
 @app.route('/admin/ficha/<int:ficha_id>/toggle', methods=['GET'])
 def toggle_ficha(ficha_id):
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     conn = get_db_connection()
     if not conn:
@@ -487,7 +447,7 @@ def toggle_ficha(ficha_id):
 @app.route('/admin/aprendiz/<int:ficha_id>/<int:aprendiz_id>/toggle', methods=['GET'])
 def toggle_aprendiz(ficha_id, aprendiz_id):
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     conn = get_db_connection()
     if not conn:
@@ -522,7 +482,7 @@ def toggle_aprendiz(ficha_id, aprendiz_id):
 @app.route('/admin/instructores', methods=['GET', 'POST'])
 def admin_instructores():
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     nombre_completo = f"{session.get('user_name', '')} {session.get('user_apellido', '')}".strip()
 
@@ -580,7 +540,7 @@ def registro_instructor():
 def init_db():
     """Inicializa/actualiza la estructura de la base de datos"""
     if 'user_role' not in session or session['user_role'] != 'admin': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
     
     conn = get_db_connection()
     if not conn:
@@ -693,7 +653,7 @@ def init_db():
 @app.route("/aprendiz")
 def aprendiz_dashboard():
     if 'user_role' not in session or session['user_role'] != 'aprendiz':
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
     
     nombre_completo = f"{session.get('user_name', '')} {session.get('user_apellido', '')}".strip()
     
@@ -750,7 +710,7 @@ def aprendiz_dashboard():
 def prueba(tipo, id_instrumento):
     if 'user_role' not in session or session['user_role'] != 'aprendiz':
         flash('Debes iniciar sesión como aprendiz para acceder a los exámenes.', 'warning')
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     conn = get_db_connection()
     if not conn:
@@ -990,7 +950,7 @@ def finalizar_examen():
 @app.route("/instructor")
 def inicio_instructor():
     if 'user_role' not in session or session['user_role'] != 'instructor':
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
     conn = get_db_connection()
     if not conn: 
         return "Error: No se pudo conectar a la base de datos.", 500
@@ -1049,7 +1009,7 @@ def crear_examen():
 @app.route("/examen/gestionar/<int:id_instrumento>")
 def gestionar_examen(id_instrumento):
     if 'user_role' not in session or session['user_role'] != 'instructor': 
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
     conn = get_db_connection()
     if not conn: 
         return "Error de conexión", 500
@@ -1495,7 +1455,7 @@ def asignar_examen_a_fichas(id_instrumento):
 @app.route('/ranking/<int:id_instrumento>')
 def ver_ranking(id_instrumento):
     if 'user_role' not in session or session['user_role'] != 'instructor':
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
     conn = get_db_connection()
     if not conn:
@@ -1670,17 +1630,3 @@ def asignar_fase2():
     finally:
         cursor.close()
         conn.close()
-
-# --------------------------------------------------------------------------
-# Factory para wsgi.py y run.py
-# --------------------------------------------------------------------------
-def create_app(config_object=None):
-    """Factory para mod_wsgi y entornos que necesitan un entrypoint.
-
-    En este paso devuelve la app ya configurada a nivel de módulo.
-    En pasos posteriores moveremos las rutas a blueprints y esta función
-    construirá la app desde cero.
-    """
-    if config_object is not None:
-        app.config.from_object(config_object)
-    return app
