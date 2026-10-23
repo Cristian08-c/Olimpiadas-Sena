@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Exámenes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio_instructor.css') }}" />
+</head>
+<body>
+    <header>
+        <div class="header">
+            <div class="logo-cidt">
+                <a class="a_logo-sena" target="_blank" href="https://zajuna.sena.edu.co/">
+                    <img src="{{ url_for('static', filename='img/logo_sena.png') }}" alt="logo del SENA" />
+                </a>
+                <h5 class="logo-cidt-text">
+                    Centro Industrial <br />
+                    y del Desarrollo Tecnologico <br />
+                    <p class="p-logo-cidt">Regional Santander</p>
+                </h5>
+            </div>
+            <div class="session-container">
+                <a href="{{ url_for('logout') }}" class="logout-button">Cerrar Sesión</a>
+            </div>
+        </div>
+        <div class="nav"></div>
+    </header>
+
+    <main class="contenido">
+        <section class="sec">
+            <div class="section-header">
+                <h2>Exámenes Creados</h2>
+                <button id="crear-examen-btn" class="crear-examen-btn">Crear Examen</button>
+            </div>
+
+            <div class="examenes-lista" id="examenes-lista">
+                <!-- Los exámenes se cargarán aquí desde la base de datos -->
+                {% for examen in examenes %}
+                <div class="examen-card" id="examen-{{ examen.id_instrumento }}">
+                    <div class="examen-info">
+                        <h3>{{ examen.titulo }}</h3>
+                        <!-- CAMBIO: Se muestra la fase del examen. Se usa notación de corchetes por el nombre de la columna -->
+                        <p>Tipo: {{ examen.tipo }} | Fase: {{ examen['fase(1-2)'] }} | Estado: {{ examen.estado }} | Año: {{ examen.fecha_creacion.year }}</p>
+                    </div>
+                    <div class="examen-acciones">
+                        <a href="{{ url_for('gestionar_examen', id_instrumento=examen.id_instrumento) }}" class="btn-gestionar">Gestionar</a>
+                        <a href="{{ url_for('ver_ranking', id_instrumento=examen.id_instrumento) }}" class="btn-ranking">Ver Ranking</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <!-- Ventana Modal para Crear Examen -->
+    <div id="modal-crear-examen" class="modal">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2>Crear Nuevo Examen</h2>
+                <span class="cerrar-modal">&times;</span>
+            </div>
+            <form id="form-crear-examen">
+                <div id="error-mensaje" style="display: none;"></div>
+                <div class="form-grupo">
+                    <label for="titulo">Título del Examen:</label>
+                    <input type="text" id="titulo" name="titulo" required>
+                </div>
+                <div class="form-grupo">
+                    <label for="tipo">Tipo:</label>
+                    <select id="tipo" name="tipo" required>
+                        <option value="matematicas">Matemáticas</option>
+                        <option value="ortografia">Ortografía</option>
+                        <option value="ingles">Inglés</option>
+                    </select>
+                </div>
+                <div class="form-grupo">
+                    <label for="fase">Fase:</label>
+                    <select id="fase" name="fase" required>
+                        <option value="1">Fase 1</option>
+                        <option value="2">Fase 2</option>
+                    </select>
+                </div>
+                <div class="form-grupo">
+                    <label>Duración:</label>
+                    <div class="duracion-grupo">
+                        <div>
+                            <input type="number" id="duracion_horas" name="duracion_horas" min="0" max="23" placeholder="Horas" value="1">
+                        </div>
+                        <div>
+                            <input type="number" id="duracion_minutos" name="duracion_minutos" min="0" max="59" placeholder="Minutos" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-guardar">Guardar Examen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Lógica de la Ventana Modal ---
+        const modal = document.getElementById('modal-crear-examen');
+        const btnAbrirModal = document.getElementById('crear-examen-btn');
+        const spanCerrarModal = document.querySelector('.cerrar-modal');
+        const formCrearExamen = document.getElementById('form-crear-examen');
+        const errorMensaje = document.getElementById('error-mensaje');
+
+        btnAbrirModal.onclick = () => {
+            formCrearExamen.reset();
+            errorMensaje.style.display = 'none';
+            modal.style.display = 'block';
+        };
+
+        spanCerrarModal.onclick = () => { modal.style.display = 'none'; };
+        window.onclick = (event) => {
+            if (event.target == modal) { modal.style.display = 'none'; }
+        };
+
+        // --- Lógica para Crear el Examen ---
+        formCrearExamen.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = {
+                titulo: document.getElementById('titulo').value,
+                tipo: document.getElementById('tipo').value,
+                fase: document.getElementById('fase').value,
+                duracion: `${String(document.getElementById('duracion_horas').value || 0).padStart(2, '0')}:${String(document.getElementById('duracion_minutos').value || 0).padStart(2, '0')}:00`
+            };
+
+            if (formData.titulo.trim() === '') {
+                errorMensaje.textContent = 'El título no puede estar vacío.';
+                errorMensaje.style.display = 'block';
+                return;
+            }
+            
+            crearExamen(formData);
+        });
+
+        async function crearExamen(datosExamen) {
+            try {
+                const response = await fetch("{{ url_for('crear_examen') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datosExamen)
+                });
+
+                const resultado = await response.json();
+
+                if (!response.ok) {
+                    if (resultado.conflicto_anual) {
+                        const crearParaSiguienteAno = confirm(resultado.error + "\n\n¿Desea crearlo para el siguiente año?");
+                        if (crearParaSiguienteAno) {
+                            crearExamen({ ...datosExamen, crear_proximo_ano: true });
+                        } else {
+                             errorMensaje.textContent = resultado.error;
+                             errorMensaje.style.display = 'block';
+                        }
+                    } else {
+                        throw new Error(resultado.error || 'Error desconocido del servidor.');
+                    }
+                } else {
+                    agregarExamenAlDOM(resultado);
+                    modal.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Error al crear el examen:', error);
+                if (!error.message.includes('conflicto_anual')) {
+                    errorMensaje.textContent = error.message;
+                    errorMensaje.style.display = 'block';
+                }
+            }
+        }
+
+        function agregarExamenAlDOM(examen) {
+            const listaExamenes = document.getElementById('examenes-lista');
+            
+            const card = document.createElement('div');
+            card.className = 'examen-card';
+            card.id = `examen-${examen.id_instrumento}`;
+            
+            // CAMBIO: Se añade la fase a la tarjeta creada dinámicamente
+            card.innerHTML = `
+                <div class="examen-info">
+                    <h3>${examen.titulo}</h3>
+                    <p>Tipo: ${examen.tipo} | Fase: ${examen.fase} | Estado: ${examen.estado} | Año: ${examen.ano}</p>
+                </div>
+                <div class="examen-acciones">
+                    <a href="/examen/gestionar/${examen.id_instrumento}" class="btn-gestionar">Gestionar</a>
+                    <a href="/ranking/${examen.id_instrumento}" class="btn-ranking">Ver Ranking</a>
+                </div>
+            `;
+            
+            listaExamenes.appendChild(card);
+        }
+    </script>
+</body>
+</html>

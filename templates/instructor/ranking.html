@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking - {{ examen.titulo }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio_instructor.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ranking.css') }}">
+    
+    <!-- INICIO DE CORRECCIÓN: Estilos para la paginación -->
+    <style>
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; /* Permite que se ajuste en pantallas muy pequeñas */
+            gap: 4px;
+            margin-top: 0px;
+            padding: 10px; /* Evita que los botones toquen los bordes */
+        }
+        .page-link, .page-ellipsis {
+            display: inline-flex; /* Usar flex para centrar contenido */
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            margin: 0 2px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff; /* Usar un color estándar si la variable CSS no carga */
+            color: var(--color-primario, #007bff);
+            font-size: 0.9em;
+            min-width: 38px; /* Ancho mínimo para consistencia */
+            box-sizing: border-box; /* Asegura que el padding no afecte el ancho */
+        }
+        .page-link:hover {
+            background-color: #f4f4f4;
+        }
+        .page-link.active {
+            background-color: #007bff;
+            background-color: var(--color-primario, #007bff);
+            color: white;
+            border-color: var(--color-primario, #007bff);
+        }
+        .page-link.disabled {
+            color: #aaa;
+            pointer-events: none;
+            border-color: #eee;
+            background-color: #f9f9f9;
+        }
+        .page-ellipsis {
+            border: none;
+            color: #aaa;
+            padding: 8px 4px; /* Menos padding horizontal para los puntos */
+            min-width: auto;
+        }
+    </style>
+    <!-- FIN DE CORRECCIÓN -->
+
+</head>
+<body>
+    <header>
+        <div class="header">
+            <div class="logo-cidt">
+                <a class="a_logo-sena" target="_blank" href="https://zajuna.sena.edu.co/">
+                    <img src="{{ url_for('static', filename='img/logo_sena.png') }}" alt="logo del SENA" />
+                </a>
+                <h5 class="logo-cidt-text">
+                    Centro Industrial <br />
+                    y del Desarrollo Tecnologico <br />
+                    <p class="p-logo-cidt">Regional Santander</p>
+                </h5>
+            </div>
+            <div class="session-container">
+                 <a href="{{ url_for('inicio_instructor') }}" class="logout-button">← Volver</a>
+            </div>
+        </div>
+        <div class="nav"></div>
+    </header>
+
+    <main class="contenido">
+        <!-- Panel Izquierdo -->
+        <div class="info-panel">
+            <div class="info-box">
+                <h2>{{ examen.titulo }}</h2>
+                <p>
+                    Tipo: {{ examen.tipo.capitalize() }} | Fase: {{ examen.fase }} | Año: {{ examen.anio }}
+                </p>
+                <hr>
+                <p>Total de Aprendices: <span>{{ ranking|length }}</span></p>
+            </div>
+
+            {% if ranking and examen.fase == 1 %}
+            <div class="info-box actions-box">
+                 <!-- INICIO DE CORRECCIÓN: Mostrar mensaje si ya está asignado -->
+                 {% if fase2_asignada %}
+                 <div class="selection-counter" style="color: var(--color-exito, #28a745); font-weight: 500; text-align: center;">
+                     Ya se asignaron los cupos a Fase 2.
+                 </div>
+                 {% else %}
+                 <div id="selection-counter" class="selection-counter">Seleccionados: 0</div>
+                 {% endif %}
+                 <button id="btn-open-modal" class="btn btn-asignar-fase2" {{ 'disabled' if fase2_asignada }}>
+                     {{ 'Cupos Asignados' if fase2_asignada else 'Asignar a Fase 2' }}
+                 </button>
+                 <!-- FIN DE CORRECCIÓN -->
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Panel Derecho -->
+        <div class="table-panel">
+            <div class="ranking-table-container">
+                {% if ranking %}
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center;">Posición</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Identificación</th>
+                            <th style="text-align: center;">Ficha</th>
+                            <th style="text-align: center;">Puntaje</th>
+                            <th style="text-align: center;">Seleccionar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body">
+                        {% for aprendiz in ranking %}
+                        <tr id="aprendiz-{{ aprendiz.identificacion }}" class="{{ 'top-30' if loop.index <= 40 else '' }}">
+                            <td class="position">{{ loop.index }}</td>
+                            <td>{{ aprendiz.nombre }}</td>
+                            <td>{{ aprendiz.apellido }}</td>
+                            <td>{{ aprendiz.identificacion }}</td>
+                            <td style="text-align: center;">{{ aprendiz.id_ficha }}</td>
+                            <td class="score">{{ aprendiz.calificacion }}</td>
+                            <td style="text-align: center;">
+                                <!-- INICIO DE CORRECCIÓN: Deshabilitar checkbox si ya fue asignado -->
+                                <input type="checkbox" data-identificacion="{{ aprendiz.identificacion }}" {{ 'checked' if loop.index <= 40 }} {{ 'disabled' if fase2_asignada }}>
+                                <!-- FIN DE CORRECCIÓN -->
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="text-align: center; padding: 20px;">No hay resultados para mostrar en el ranking.</p>
+                {% endif %}
+            </div>
+            <div id="pagination-container" class="pagination-container"></div>
+        </div>
+    </main>
+
+    <!-- Modal para Asignar Fechas -->
+    <div id="modal-asignar-fechas" class="modal">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2>Asignar Fechas para Fase 2</h2>
+                <span class="cerrar-modal">&times;</span>
+            </div>
+            <p>Por favor, define el rango de fechas para el examen de Fase 2.</p>
+            <div class="form-grupo">
+                <label for="fecha-inicio">Fecha de Inicio *</label>
+                <input type="datetime-local" id="fecha-inicio" name="fecha-inicio" class="form-control" required />
+            </div>
+            <div class="form-grupo">
+                <label for="fecha-fin">Fecha de Fin *</label>
+                <input type="datetime-local" id="fecha-fin" name="fecha-fin" class="form-control" required />
+            </div>
+            <div class="modal-footer" style="text-align: right; margin-top: 20px;">
+                <button id="btn-confirmar-asignacion" class="btn-guardar">Confirmar Asignación</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const allCheckboxes = Array.from(document.querySelectorAll('#ranking-body input[type="checkbox"]'));
+            const counter = document.getElementById('selection-counter');
+            
+            function updateCounter() {
+                // Se cuenta sobre todos los checkboxes, no solo los visibles
+                const count = allCheckboxes.filter(cb => cb.checked).length;
+                if (counter) { // <-- Importante verificar si existe
+                    counter.textContent = `Seleccionados: ${count}`;
+                }
+            }
+            
+            // Adjuntar evento a los checkboxes originales
+            allCheckboxes.forEach(cb => cb.addEventListener('change', updateCounter));
+            
+            // INICIO DE CORRECCIÓN: Solo llamar updateCounter si el contador existe
+            if (counter) {
+                updateCounter();
+            }
+            // FIN DE CORRECCIÓN
+
+            const tableBody = document.getElementById('ranking-body');
+            const originalRows = Array.from(tableBody.querySelectorAll('tr'));
+            const rowsPerPage = 40;
+            const paginationContainer = document.getElementById('pagination-container');
+            const totalPages = Math.ceil(originalRows.length / rowsPerPage);
+            let currentPage = 1;
+
+            // --- INICIO DE CORRECCIÓN: Nueva función para renderizar paginación ---
+            function renderPaginationLinks(currentPage, totalPages) {
+                paginationContainer.innerHTML = ''; // Limpiar enlaces antiguos
+                if (totalPages <= 1) return;
+
+                const maxVisible = 7; // Máximo de botones visibles (ej: 1 ... 5 6 7 ... 20)
+
+                // --- Función auxiliar para crear enlaces ---
+                function createLink(page, text, isDisabled = false, isActive = false) {
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.className = 'page-link';
+                    link.textContent = text || page;
+                    if (page) link.dataset.page = page;
+                    if (isDisabled) link.classList.add('disabled');
+                    if (isActive) link.classList.add('active');
+                    return link;
+                }
+
+                function createEllipsis() {
+                    const span = document.createElement('span');
+                    span.className = 'page-ellipsis';
+                    span.textContent = '...';
+                    return span;
+                }
+
+                // --- 1. Botón "Anterior" ---
+                const prev = createLink(currentPage - 1, '« Anterior', currentPage === 1);
+                prev.id = 'prev-page';
+                paginationContainer.appendChild(prev);
+
+                // --- 2. Números de Página ---
+                if (totalPages <= maxVisible) {
+                    // Mostrar todas las páginas si son pocas
+                    for (let i = 1; i <= totalPages; i++) {
+                        paginationContainer.appendChild(createLink(i, null, false, i === currentPage));
+                    }
+                } else {
+                    // Mostrar paginación truncada
+                    
+                    // Definir cuántas páginas mostrar alrededor de la actual
+                    let pagesToShow = 3; // Ej. [c-1, c, c+1]
+                    let startPage = Math.max(2, currentPage - 1);
+                    let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+                    // Ajustar en los bordes
+                    if (currentPage <= 3) { // Cerca del inicio
+                        startPage = 2;
+                        endPage = Math.min(totalPages - 1, 4); // Muestra 1, 2, 3, 4
+                    } else if (currentPage >= totalPages - 2) { // Cerca del final
+                        startPage = Math.max(2, totalPages - 3); // Muestra ... 17, 18, 19, 20
+                        endPage = totalPages - 1;
+                    }
+
+                    // Página 1
+                    paginationContainer.appendChild(createLink(1, null, false, currentPage === 1));
+
+                    // Ellipsis inicial
+                    if (startPage > 2) {
+                        paginationContainer.appendChild(createEllipsis());
+                    }
+
+                    // Páginas intermedias
+                    for (let i = startPage; i <= endPage; i++) {
+                        paginationContainer.appendChild(createLink(i, null, false, i === currentPage));
+                    }
+
+                    // Ellipsis final
+                    if (endPage < totalPages - 1) {
+                        paginationContainer.appendChild(createEllipsis());
+                    }
+
+                    // Página final
+                    paginationContainer.appendChild(createLink(totalPages, null, false, currentPage === totalPages));
+                }
+
+                // --- 3. Botón "Siguiente" ---
+                const next = createLink(currentPage + 1, 'Siguiente »', currentPage === totalPages);
+                next.id = 'next-page';
+                paginationContainer.appendChild(next);
+            }
+            
+            // Adjuntar el listener de paginación UNA VEZ
+            if (totalPages > 1) {
+                paginationContainer.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    let target = e.target.closest('.page-link');
+                    
+                    // Ignorar clics en 'disabled', 'active' o fuera de un enlace
+                    if (!target || target.classList.contains('disabled') || target.classList.contains('active')) {
+                        return;
+                    }
+                    
+                    const pageNumber = target.dataset.page;
+                    if (pageNumber) {
+                        goToPage(parseInt(pageNumber));
+                    } else if (target.id === 'prev-page') {
+                        goToPage(currentPage - 1);
+                    } else if (target.id === 'next-page') {
+                        goToPage(currentPage + 1);
+                    }
+                });
+            }
+
+            // --- FIN DE CORRECCIÓN ---
+
+
+            // --- INICIO DE CORRECCIÓN: goToPage modificado ---
+            function goToPage(pageNumber) {
+                if (pageNumber < 1 || pageNumber > totalPages) return;
+                currentPage = pageNumber;
+
+                const startIndex = (currentPage - 1) * rowsPerPage;
+                const endIndex = startIndex + rowsPerPage;
+
+                tableBody.innerHTML = '';
+                originalRows.slice(startIndex, endIndex).forEach(row => tableBody.appendChild(row));
+
+                // Renderizar los enlaces de paginación CADA VEZ que cambiamos de página
+                renderPaginationLinks(currentPage, totalPages);
+            }
+            // --- FIN DE CORRECCIÓN ---
+
+            if(originalRows.length > 0) {
+                // setupPagination(); // Ya no se llama aquí
+                goToPage(1); // Esto renderizará la primera página y la paginación inicial
+            }
+
+            const modal = document.getElementById('modal-asignar-fechas');
+            const btnOpenModal = document.getElementById('btn-open-modal');
+            const btnCerrarModal = modal.querySelector('.cerrar-modal');
+            const btnConfirmar = document.getElementById('btn-confirmar-asignacion');
+
+            if (btnOpenModal) {
+                btnOpenModal.addEventListener('click', () => modal.style.display = 'block');
+            }
+
+            if(btnCerrarModal) {
+              btnCerrarModal.addEventListener('click', () => modal.style.display = 'none');
+            }
+            
+            window.addEventListener('click', (event) => {
+                if (event.target == modal) modal.style.display = 'none';
+            });
+
+            if(btnConfirmar) {
+              btnConfirmar.addEventListener('click', async () => {
+                  const fecha_inicio = document.getElementById('fecha-inicio').value;
+                  const fecha_fin = document.getElementById('fecha-fin').value;
+                  
+                  if (!fecha_inicio || !fecha_fin) { alert('Debes seleccionar una fecha de inicio y fin.'); return; }
+                  if (new Date(fecha_fin) <= new Date(fecha_inicio)) { alert('La fecha de fin debe ser posterior a la de inicio.'); return; }
+                  
+                  const aprendices_ids = allCheckboxes.filter(cb => cb.checked).map(cb => cb.dataset.identificacion);
+
+                  if (aprendices_ids.length === 0) { alert('No has seleccionado ningún aprendiz.'); return; }
+
+                  const data = {
+                      id_instrumento_fase1: {{ examen.id_instrumento }},
+                      aprendices_ids: aprendices_ids,
+                      fecha_inicio: fecha_inicio,
+                      fecha_fin: fecha_fin
+                  };
+
+                  btnConfirmar.disabled = true;
+                  btnConfirmar.textContent = 'Asignando...';
+
+                  try {
+                      const response = await fetch("{{ url_for('asignar_fase2') }}", {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(data)
+                      });
+                      const result = await response.json();
+                      if (!response.ok) throw new Error(result.error || 'Ocurrió un error en el servidor.');
+                      
+                      alert(result.message);
+                      modal.style.display = 'none';
+
+                      // --- INICIO DE CORRECCIÓN ---
+                      // Deshabilitar el botón principal y cambiar texto
+                      const btnOpenModal = document.getElementById('btn-open-modal');
+                      if (btnOpenModal) {
+                          btnOpenModal.disabled = true;
+                          btnOpenModal.textContent = 'Cupos Asignados';
+                      }
+                      // Ocultar contador y mostrar mensaje
+                      const counterDiv = document.getElementById('selection-counter');
+                      if (counterDiv) {
+                          counterDiv.innerHTML = 'Ya se asignaron los cupos a Fase 2.';
+                          counterDiv.style.color = 'var(--color-exito, #28a745)';
+                          counterDiv.style.fontWeight = '500';
+                          counterDiv.style.textAlign = 'center';
+                      }
+                      // Deshabilitar todos los checkboxes
+                      allCheckboxes.forEach(cb => cb.disabled = true);
+                      // --- FIN DE CORRECCIÓN ---
+
+                  } catch (error) {
+                      alert(`Error: ${error.message}`);
+                  } finally {
+                      btnConfirmar.disabled = false;
+                      btnConfirmar.textContent = 'Confirmar Asignación';
+                  }
+              });
+            }
+        });
+    </script>
+</body>
+</html>
+
+

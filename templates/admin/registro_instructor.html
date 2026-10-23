@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro de Usuario - Gestión de Aprendices</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/admin/style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-top">
+          <div class="logo-section">
+            <img
+              src="{{ url_for('static', filename='img/green-sena-logo.webp') }}"
+              alt="Logo SENA"
+              class="logo-sena"
+            />
+            <div class="sena-info">
+              <h1>Centro Industrial<br />y del Desarrollo Tecnológico</h1>
+              <p class="subtitle">Regional Santander</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <span style="color: #333; margin-right: 15px"
+              >{{ usuario.nombre_completo }}</span
+            >
+            <a href="{{ url_for('logout') }}" class="btn-cerrar"
+              >Cerrar Sesión</a
+            >
+          </div>
+        </div>
+        <div class="header-nav">
+          <nav>
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+              >Subir Archivo</a
+            >
+            <a href="{{ url_for('admin_fichas') }}" class="nav-link"
+              >Ver Fichas</a
+            >
+            <a
+              href="{{ url_for('admin_instructores') }}"
+              class="nav-link active"
+              >Registrar Usuario</a
+            >
+          </nav>
+        </div>
+      </header>
+      <div class="header-separator"></div>
+
+      <main>
+        <div class="fichas-section">
+          <h2>Registro de Usuario</h2>
+          <p class="section-description">
+            Complete el formulario para registrar un nuevo instructor o administrador
+          </p>
+          <!-- Mostrar mensajes flash -->
+          {% with messages = get_flashed_messages() %} {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %} {% endwith %}
+
+          <form
+            action="{{ url_for('admin_instructores') }}"
+            method="post"
+            class="registro-form"
+          >
+            <div class="form-group">
+              <label for="rol">Tipo de Usuario:</label>
+              <select
+                id="rol"
+                name="rol"
+                required
+                class="form-select"
+              >
+                <option value="">Seleccione un tipo...</option>
+                <option value="instructor">Instructor</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="identificacion">Número de Documento:</label>
+              <input
+                type="text"
+                id="identificacion"
+                name="identificacion"
+                required
+                placeholder="Ej: 12345678"
+                pattern="[0-9]{6,12}"
+                title="Ingrese un número de documento válido (6-12 dígitos)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="nombre">Nombre:</label>
+              <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                required
+                placeholder="Ej: Juan Carlos"
+                maxlength="100"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="apellido">Apellido:</label>
+              <input
+                type="text"
+                id="apellido"
+                name="apellido"
+                required
+                placeholder="Ej: Pérez García"
+                maxlength="100"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="celular">Celular:</label>
+              <input
+                type="tel"
+                id="celular"
+                name="celular"
+                required
+                placeholder="Ej: 3001234567"
+                pattern="[0-9]{10}"
+                title="Ingrese un número de celular válido (10 dígitos)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="correo">Correo Electrónico:</label>
+              <input
+                type="email"
+                id="correo"
+                name="correo"
+                required
+                placeholder="Ej: usuario@misena.edu.co"
+                maxlength="150"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="contraseña">Contraseña:</label>
+              <input
+                type="password"
+                id="contraseña"
+                name="contraseña"
+                required
+                placeholder="Ingrese una contraseña segura"
+                minlength="6"
+                maxlength="20"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="confirmar_contraseña">Confirmar Contraseña:</label>
+              <input
+                type="password"
+                id="confirmar_contraseña"
+                name="confirmar_contraseña"
+                required
+                placeholder="Confirme su contraseña"
+                minlength="6"
+                maxlength="20"
+              />
+            </div>
+
+            <div class="form-buttons">
+              <button type="submit" class="btn-primary">
+                Registrar Usuario
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+    <script>
+      // Validación de confirmación de contraseña
+      document
+        .getElementById("confirmar_contraseña")
+        .addEventListener("input", function () {
+          const contraseña = document.getElementById("contraseña").value;
+          const confirmar = this.value;
+
+          if (contraseña !== confirmar) {
+            this.setCustomValidity("Las contraseñas no coinciden");
+          } else {
+            this.setCustomValidity("");
+          }
+        });
+
+      // Validación en tiempo real del documento
+      document
+        .getElementById("identificacion")
+        .addEventListener("input", function () {
+          const valor = this.value;
+          if (valor.length < 6 || valor.length > 12) {
+            this.setCustomValidity(
+              "El documento debe tener entre 6 y 12 dígitos"
+            );
+          } else {
+            this.setCustomValidity("");
+          }
+        });
+
+      // Validación del celular
+      document.getElementById("celular").addEventListener("input", function () {
+        const valor = this.value;
+        if (valor.length !== 10) {
+          this.setCustomValidity(
+            "El celular debe tener exactamente 10 dígitos"
+          );
+        } else {
+          this.setCustomValidity("");
+        }
+      });
+
+      // Actualizar texto del botón según el rol seleccionado
+      document.getElementById("rol").addEventListener("change", function () {
+        const boton = document.querySelector(".btn-primary");
+        const valor = this.value;
+        
+        if (valor === "instructor") {
+          boton.textContent = "Registrar Instructor";
+        } else if (valor === "admin") {
+          boton.textContent = "Registrar Administrador";
+        } else {
+          boton.textContent = "Registrar Usuario";
+        }
+      });
+    </script>
+
+    <script src="{{ url_for('static', filename='js/admin/registro_instructor.js') }}"></script>
+  </body>
+</html>

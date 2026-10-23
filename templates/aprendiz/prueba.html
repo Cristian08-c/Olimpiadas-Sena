@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prueba de Conocimiento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- INICIO DE ESTILOS -->
+    <style>
+      :root {
+        --color-brand: #39a900;
+        --color-brand-dark: #3fb400;
+        --color-text-primary: #1f2937;
+        --color-text-secondary: #6b7280;
+        --color-border: #d1d5db;
+        --color-background-light: #f9fafb;
+        --color-white: #ffffff;
+        --color-error: #ef4444;
+        --color-warning: #ffc107;
+        --color-info: #3b82f6;
+        --color-info-dark: #2563eb;
+        --color-disabled: #e5e7eb;
+        --shadow-neutral: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --focus-ring-brand: rgba(57, 169, 0, 0.25);
+        --font-family-sans: "Poppins", -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        --border-radius: 8px;
+      }
+      body.dark-mode {
+        --color-background-light: #020617;
+        --color-white: #0f172a;
+        --color-border: #374151;
+        --color-text-primary: #e5e7eb;
+        --color-text-secondary: #9ca3af;
+        --color-disabled: #4b5563;
+        --shadow-neutral: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: var(--font-family-sans);
+        background-color: var(--color-background-light);
+        color: var(--color-text-primary);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 0;
+        transition: background-color 0.3s, color 0.3s;
+        overflow: hidden; /* Evita el scroll en la vista de escritorio */
+      }
+      .quiz-container {
+        width: 100%;
+        height: 100vh;
+        background-color: var(--color-background-light);
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas: "header header" "nav main";
+        overflow: hidden;
+      }
+      .quiz-header {
+        grid-area: header;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+        border-bottom: 1px solid var(--color-border);
+        background-color: var(--color-white);
+        box-shadow: var(--shadow-neutral);
+        z-index: 10;
+      }
+      .quiz-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .timer {
+        background-color: var(--color-background-light);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-brand);
+        min-width: 90px;
+        text-align: center;
+      }
+      .timer.ending {
+        color: var(--color-error);
+        animation: pulse 1s infinite;
+      }
+      @keyframes pulse {
+        50% {
+          transform: scale(1.05);
+        }
+      }
+      .question-nav {
+        grid-area: nav;
+        background-color: var(--color-white);
+        padding: 20px;
+        border-right: 1px solid var(--color-border);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .progress-container p {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: var(--color-text-secondary);
+      }
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: var(--color-border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .progress-bar-inner {
+        height: 100%;
+        background-color: var(--color-brand);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+      .question-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .question-grid-item {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid var(--color-border);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .question-grid-item:hover {
+        border-color: var(--color-brand);
+        transform: scale(1.05);
+      }
+      .question-grid-item.answered {
+        background-color: var(--color-brand);
+        color: var(--color-white);
+        border-color: var(--color-brand);
+      }
+      .question-grid-item.current {
+        border-color: var(--color-brand);
+        font-weight: 700;
+        transform: scale(1.1);
+        box-shadow: 0 0 8px var(--focus-ring-brand);
+      }
+      .main-content {
+        grid-area: main;
+        padding: 30px;
+        overflow: hidden;
+        display: flex;
+      }
+      .question-content-wrapper {
+        background-color: var(--color-white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-neutral);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      .question-area {
+        flex-grow: 1;
+        padding: 40px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .question-header {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 25px;
+        line-height: 1.5;
+        flex-shrink: 0;
+      }
+      .question-points {
+        font-weight: 400;
+        color: var(--color-text-secondary);
+        font-size: 16px;
+      }
+      .pregunta-vista-wrapper {
+        display: flex;
+        gap: 30px;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        flex-grow: 1;
+      }
+      .pregunta-info-col {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .pregunta-contenido-col {
+        flex: 1.5;
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+      .pregunta-imagen {
+        width: 100%;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+        object-fit: contain;
+        cursor: pointer;
+      }
+      .enunciado-texto {
+        padding: 15px;
+        border-radius: var(--border-radius);
+        background: var(--color-background-light);
+        line-height: 1.6;
+        overflow-y: auto;
+        /* Mejoras para el manejo de texto largo */
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+      .info-full-height {
+        height: 100%;
+      }
+      .info-half-height {
+        height: calc(50% - 10px);
+      }
+
+      .bottom-navigation {
+        padding: 20px 40px;
+        border-top: 1px solid var(--color-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--color-white);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        flex-shrink: 0;
+      }
+      .nav-btn-group {
+        display: flex;
+        gap: 15px;
+      }
+      .nav-btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .nav-btn:disabled {
+        background-color: var(--color-disabled) !important;
+        color: var(--color-text-secondary) !important;
+        cursor: not-allowed;
+      }
+      .prev-btn {
+        background-color: transparent;
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
+      }
+      .prev-btn:hover:not(:disabled) {
+        background-color: var(--color-background-light);
+      }
+      .next-btn {
+        background-color: var(--color-brand);
+        color: var(--color-white);
+      }
+      .next-btn:hover:not(:disabled) {
+        background-color: var(--color-brand-dark);
+      }
+      .save-btn {
+        background-color: var(--color-info);
+        color: var(--color-white);
+      }
+      .save-btn:hover:not(:disabled) {
+        background-color: var(--color-info-dark);
+      }
+      .finish-btn {
+        background-color: var(--color-error);
+        color: var(--color-white);
+      }
+      .hidden {
+        display: none;
+      }
+
+      /* Estilos para Tipos de Preguntas */
+      .options-list {
+        list-style: none;
+      }
+      .options-list li {
+        margin-bottom: 15px;
+      }
+      .options-list label {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 2px solid var(--color-border);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .options-list.disabled label {
+        cursor: not-allowed;
+        background-color: var(--color-background-light);
+      }
+      .options-list label:hover:not(.disabled *) {
+        border-color: var(--color-brand);
+        background-color: var(--color-background-light);
+      }
+      .options-list input[type="radio"]:checked + .option-text {
+        font-weight: 600;
+        color: var(--color-brand);
+      }
+      .options-list input[type="radio"] {
+        display: none;
+      }
+      .custom-radio {
+        width: 22px;
+        height: 22px;
+        border: 2px solid var(--color-border);
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 15px;
+        position: relative;
+      }
+      .options-list input[type="radio"]:checked ~ .custom-radio {
+        border-color: var(--color-brand);
+      }
+      .options-list input[type="radio"]:checked ~ .custom-radio::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 12px;
+        height: 12px;
+        background: var(--color-brand);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .completar-container .pregunta-texto {
+        font-size: 1.2em;
+        line-height: 1.8;
+      }
+      .blank-space {
+        display: inline-block;
+        min-width: 120px;
+        padding: 5px 10px;
+        border: 2px dashed var(--color-border);
+        border-radius: var(--border-radius);
+        text-align: center;
+        color: var(--color-brand);
+        font-weight: 600;
+        background-color: var(--color-background-light);
+      }
+      .blank-space.over {
+        border-color: var(--color-brand);
+        background-color: #e8f5e9;
+      }
+      .palabras-disponibles-container {
+        margin-top: 30px;
+      }
+      .palabras-disponibles-container h3 {
+        font-size: 16px;
+        color: var(--color-text-secondary);
+        margin-bottom: 15px;
+      }
+      .palabras-disponibles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .palabra-item {
+        padding: 10px 20px;
+        background-color: var(--color-info);
+        color: white;
+        border-radius: 20px;
+        cursor: grab;
+        user-select: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .palabra-item.disabled {
+        cursor: not-allowed;
+        background-color: var(--color-disabled);
+        opacity: 0.7;
+      }
+      .palabra-item:active {
+        cursor: grabbing;
+        transform: scale(1.05);
+        box-shadow: var(--shadow-neutral);
+      }
+      .relacionar-container {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 40px;
+      }
+      .relacionar-column {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 45%;
+      }
+      .relacionar-item {
+        padding: 15px;
+        border: 2px solid var(--color-border);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+      .relacionar-item.disabled {
+        cursor: not-allowed;
+        background-color: var(--color-background-light);
+      }
+      .relacionar-item:hover:not(.disabled) {
+        border-color: var(--color-brand);
+        background-color: var(--color-background-light);
+      }
+      .relacionar-item.selected {
+        border-color: var(--color-brand);
+        background-color: #e8f5e9;
+        font-weight: 600;
+        transform: scale(1.02);
+      }
+      .relacionar-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      /* Estilos de Modales */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      .modal-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background-color: var(--color-white);
+        padding: 30px;
+        border-radius: var(--border-radius);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      .modal-overlay.visible .modal-content {
+        transform: scale(1);
+      }
+      .modal-content h2 {
+        margin-bottom: 15px;
+        color: var(--color-brand);
+      }
+      .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+      }
+      #image-modal .modal-content {
+        background-color: transparent;
+        box-shadow: none;
+        max-width: 90vw;
+        max-height: 90vh;
+        padding: 0;
+      }
+      #image-modal .modal-image {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: var(--border-radius);
+      }
+      #image-modal .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 25px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Media Queries para Responsividad */
+      @media (max-width: 900px) {
+        body {
+          overflow: auto; /* Permite scroll en móvil */
+          -webkit-text-size-adjust: 100%; /* Evita zoom de texto en iOS */
+        }
+        .quiz-container {
+          grid-template-columns: 1fr; /* Una sola columna */
+          grid-template-rows: auto auto 1fr;
+          grid-template-areas: "header" "nav" "main";
+          height: auto;
+          min-height: 100vh;
+        }
+        .question-nav {
+          flex-direction: row; /* Navegación horizontal */
+          border-right: none;
+          border-bottom: 1px solid var(--color-border);
+          align-items: center;
+          padding: 10px 15px;
+          justify-content: center; /* CORRECCIÓN: Centra el contenido (el progreso) */
+        }
+        .progress-container {
+          min-width: 150px;
+        }
+        .question-grid {
+          display: none; /* CORRECCIÓN: Oculta la paginación en móviles */
+        }
+        .pregunta-vista-wrapper {
+          flex-direction: column; /* Apila la imagen/enunciado y las opciones */
+          height: auto;
+          overflow: visible;
+        }
+        .main-content {
+          padding: 15px;
+          overflow: visible;
+        }
+        .question-area {
+          padding: 20px 15px;
+          overflow: visible;
+        }
+        .pregunta-info-col {
+          max-height: 50vh; /* Limita la altura de la imagen/enunciado */
+        }
+        .pregunta-contenido-col {
+          overflow-y: visible; /* Quita el scroll interno */
+        }
+        .quiz-header h1 {
+          font-size: 18px; /* Reduce el tamaño del título */
+        }
+        .bottom-navigation {
+          padding: 15px;
+          flex-wrap: wrap; 
+          justify-content: center; 
+          gap: 15px; 
+        }
+        .nav-btn {
+          padding: 10px 15px;
+          font-size: 14px;
+        }
+      }
+    </style>
+    <!-- FIN DE ESTILOS -->
+  </head>
+  <body>
+    <div
+      class="quiz-container"
+      id="quiz-container"
+      data-id-instrumento="{{ examen.id_instrumento }}"
+      data-duracion-minutos="{{ (examen.duracion.total_seconds() / 60) | int }}"
+    >
+      <header class="quiz-header">
+        <h1>{{ examen.titulo }}</h1>
+        <div class="header-controls">
+          <div id="timer" class="timer">--:--</div>
+        </div>
+      </header>
+
+      <nav class="question-nav">
+        <div class="progress-container">
+          <p>Progreso</p>
+          <div class="progress-bar">
+            <div id="progress-bar-inner" class="progress-bar-inner"></div>
+          </div>
+          <p
+            id="progress-text"
+            style="text-align: right; font-size: 12px; margin-top: 4px"
+          >
+            0/0
+          </p>
+        </div>
+        <div id="question-grid" class="question-grid"></div>
+      </nav>
+
+      <main class="main-content">
+        <div class="question-content-wrapper">
+          <div id="question-area" class="question-area">
+            <p>Cargando preguntas...</p>
+          </div>
+          <div class="bottom-navigation">
+            <div class="nav-btn-group">
+              <button id="save-btn" class="nav-btn save-btn">
+                Guardar Respuesta
+              </button>
+            </div>
+            <div class="nav-btn-group">
+              <button id="prev-btn" class="nav-btn prev-btn hidden">
+                Anterior
+              </button>
+              <button id="next-btn" class="nav-btn next-btn">Siguiente</button>
+              <button id="finish-btn" class="nav-btn finish-btn hidden">
+                Terminar Intento
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modales -->
+    <div id="confirm-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Confirmar envío</h2>
+        <p>
+          ¿Estás seguro de que quieres terminar? No podrás cambiar tus
+          respuestas.
+        </p>
+        <div class="modal-buttons">
+          <button id="cancel-submit-btn" class="nav-btn prev-btn">
+            Cancelar
+          </button>
+          <button id="confirm-submit-btn" class="nav-btn next-btn">
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="leave-confirm-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>¿Seguro que quieres salir?</h2>
+        <p>
+          Tu examen se enviará con las respuestas guardadas. No podrás volver.
+        </p>
+        <div class="modal-buttons">
+          <button id="stay-btn" class="nav-btn prev-btn">Permanecer</button>
+          <button id="leave-btn" class="nav-btn finish-btn">
+            Salir y Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="image-modal" class="modal-overlay">
+      <span id="close-image-modal" class="close-btn">&times;</span>
+      <div class="modal-content">
+        <img
+          class="modal-image"
+          id="modal-image-content"
+          src=""
+          alt="Vista ampliada de la imagen"
+        />
+      </div>
+    </div>
+
+    <!-- INICIO DEL SCRIPT ACTUALIZADO -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const quizContainer = document.getElementById("quiz-container");
+        const idInstrumento = quizContainer.dataset.idInstrumento;
+        const duracionMinutos = parseInt(quizContainer.dataset.duracionMinutos);
+        const timerEl = document.getElementById("timer");
+        const questionGridEl = document.getElementById("question-grid");
+        const questionAreaEl = document.getElementById("question-area");
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const saveBtn = document.getElementById("save-btn");
+        const finishBtn = document.getElementById("finish-btn");
+        const progressBarInnerEl =
+          document.getElementById("progress-bar-inner");
+        const progressTextEl = document.getElementById("progress-text");
+        const confirmModal = document.getElementById("confirm-modal");
+        const leaveConfirmModal = document.getElementById(
+          "leave-confirm-modal"
+        );
+        const imageModal = document.getElementById("image-modal");
+        const modalImageContent = document.getElementById(
+          "modal-image-content"
+        );
+        const closeImageModalBtn = document.getElementById("close-image-modal");
+
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let savedAnswers = {};
+        let timeLeft = duracionMinutos * 60;
+        let timerInterval;
+
+        async function fetchQuestions() {
+          try {
+            const response = await fetch(
+              `/api/examen/${idInstrumento}/preguntas`
+            );
+            if (!response.ok) throw new Error("Error al cargar las preguntas.");
+            questions = await response.json();
+            preprocessQuestions(questions); // <-- MODIFICADO
+            if (questions.length > 0) initQuiz();
+            else
+              questionAreaEl.innerHTML =
+                "<p>No se encontraron preguntas para este examen.</p>";
+          } catch (error) {
+            questionAreaEl.innerHTML = `<p>${error.message}</p>`;
+          }
+        }
+
+        function preprocessQuestions(qs) {
+          qs.forEach((q) => {
+            // Mezcla las opciones de 'relacionar'
+            if (q.tipo === "relacionar") {
+              q.shuffledColB = q.opciones
+                .map((opt, i) => ({ text: opt.b, originalIndex: i }))
+                .sort(() => Math.random() - 0.5);
+            }
+            // MODIFICADO: Cuenta los espacios en blanco para 'completar'
+            if (q.tipo === "completar") {
+              const matches = q.pregunta.match(/\[____\]/g);
+              q.numBlanks = matches ? matches.length : 0;
+            }
+          });
+        }
+
+        function initQuiz() {
+          createQuestionGrid();
+          displayQuestion(currentQuestionIndex);
+          startTimer();
+          window.addEventListener("beforeunload", handleBeforeUnload);
+
+          const resizeObserver = new ResizeObserver(() => {
+            const question = questions[currentQuestionIndex];
+            if (question && question.tipo === "relacionar") {
+              drawRelacionarLines(question.unique_id);
+            }
+          });
+          resizeObserver.observe(questionAreaEl);
+        }
+
+        function displayQuestion(index) {
+          const question = questions[index];
+          const questionId = question.unique_id;
+          const isSaved = !!savedAnswers[questionId];
+
+          const hasImage = !!question.archivo_url;
+          const hasEnunciado = !!question.enunciado;
+          let imgClass = "",
+            enunciadoClass = "";
+          if (hasImage && hasEnunciado) {
+            imgClass = enunciadoClass = "info-half-height";
+          } else if (hasImage || hasEnunciado) {
+            imgClass = enunciadoClass = "info-full-height";
+          }
+
+          const imageUrl = hasImage
+            ? `<img src="${question.archivo_url}" alt="Imagen de la pregunta" class="pregunta-imagen ${imgClass}">`
+            : "";
+          const enunciadoHtml = hasEnunciado
+            ? `<div class="enunciado-texto ${enunciadoClass}">${question.enunciado.replace(
+                /\n/g,
+                "<br>"
+              )}</div>`
+            : "";
+          const infoColHtml =
+            hasImage || hasEnunciado
+              ? `<div class="pregunta-info-col">${imageUrl}${enunciadoHtml}</div>`
+              : "";
+
+          let contentHtml = "";
+          // MODIFICADO: Asegura que la respuesta actual sea la temporal O la guardada
+          const currentAnswer =
+            userAnswers[questionId] || savedAnswers[questionId];
+
+          if (question.tipo === "seleccion_multiple") {
+            const optionsHtml = question.opciones
+              .map((option) => {
+                const isChecked =
+                  currentAnswer === option.texto ? "checked" : "";
+                return `<li><label><input type="radio" name="q${questionId}" value="${
+                  option.texto
+                }" ${isChecked} ${
+                  isSaved ? "disabled" : ""
+                }><span class="custom-radio"></span><span class="option-text">${
+                  option.texto
+                }</span></label></li>`;
+              })
+              .join("");
+            contentHtml = `<ul class="options-list ${
+              isSaved ? "disabled" : ""
+            }">${optionsHtml}</ul>`;
+          } else if (question.tipo === "completar") {
+            // --- INICIO DE MODIFICACIÓN PARA MÚLTIPLES ESPACIOS ---
+            let blankIndex = 0;
+            const preguntaTexto = question.pregunta.replace(/\[____\]/g, () => {
+              // Comprueba si hay una respuesta guardada (que es un objeto) para este índice
+              const currentWord =
+                currentAnswer && currentAnswer[blankIndex]
+                  ? currentAnswer[blankIndex]
+                  : "";
+              return `<span class="blank-space" data-question-id="${questionId}" data-blank-index="${blankIndex++}">${currentWord}</span>`;
+            });
+            // --- FIN DE MODIFICACIÓN ---
+
+            const allWords = [
+              ...question.opciones.correct,
+              ...question.opciones.distractors,
+            ].sort(() => Math.random() - 0.5);
+            const palabrasHtml = allWords
+              .map(
+                (palabra) =>
+                  `<div class="palabra-item ${isSaved ? "disabled" : ""}" ${
+                    !isSaved ? 'draggable="true"' : ""
+                  }>${palabra}</div>`
+              )
+              .join("");
+            contentHtml = `
+                        <div class="completar-container">
+                            <p class="pregunta-texto">${preguntaTexto}</p>
+                            <div class="palabras-disponibles-container">
+                                <h3>Palabras disponibles</h3>
+                                <div class="palabras-disponibles">${palabrasHtml}</div>
+                            </div>
+                        </div>`;
+          } else if (question.tipo === "relacionar") {
+            const colA = question.opciones.map((opt, i) => ({
+              text: opt.a,
+              originalIndex: i,
+            }));
+            const colB = question.shuffledColB;
+
+            const colAHtml = colA
+              .map(
+                (item) =>
+                  `<div class="relacionar-item ${
+                    isSaved ? "disabled" : ""
+                  }" data-column="a" data-index="${item.originalIndex}">${
+                    item.text
+                  }</div>`
+              )
+              .join("");
+            const colBHtml = colB
+              .map(
+                (item) =>
+                  `<div class="relacionar-item ${
+                    isSaved ? "disabled" : ""
+                  }" data-column="b" data-index="${item.originalIndex}">${
+                    item.text
+                  }</div>`
+              )
+              .join("");
+
+            contentHtml = `
+                        <div class="relacionar-container" id="relacionar-container-${questionId}">
+                             <canvas id="relacionar-canvas-${questionId}" class="relacionar-canvas"></canvas>
+                            <div class="relacionar-column">${colAHtml}</div>
+                            <div class="relacionar-column">${colBHtml}</div>
+                        </div>`;
+          }
+
+          // --- INICIO DE MODIFICACIÓN: Mover H2 para orden en móvil ---
+          questionAreaEl.innerHTML = `
+                    <div class="pregunta-vista-wrapper">
+                        ${infoColHtml}
+                        <div class="pregunta-contenido-col">
+                            <h2 class="question-header">${question.pregunta} <span class="question-points">(${question.puntos} puntos)</span></h2>
+                            ${contentHtml}
+                        </div>
+                    </div>`;
+          // --- FIN DE MODIFICACIÓN ---
+
+          if (hasImage) {
+            const imgElement = questionAreaEl.querySelector(".pregunta-imagen");
+            imgElement.addEventListener("click", () => {
+              modalImageContent.src = imgElement.src;
+              imageModal.classList.add("visible");
+            });
+          }
+
+          if (!isSaved) {
+            if (question.tipo === "completar") initCompletar(questionId); // <-- MODIFICADO
+            if (question.tipo === "relacionar") initRelacionar(questionId);
+            if (question.tipo === "seleccion_multiple") {
+              document
+                .querySelectorAll(`input[name="q${questionId}"]`)
+                .forEach((radio) => {
+                  radio.addEventListener(
+                    "change",
+                    (e) => (userAnswers[questionId] = e.target.value)
+                  );
+                });
+            }
+          }
+          if (question.tipo === "relacionar") {
+            setTimeout(() => drawRelacionarLines(questionId), 0);
+          }
+          updateNavigation();
+        }
+
+        function clearTemporaryAnswer(questionId) {
+          if (userAnswers[questionId]) delete userAnswers[questionId];
+        }
+
+        function updateNavigation() {
+          const questionId = questions[currentQuestionIndex].unique_id;
+          const isSaved = !!savedAnswers[questionId];
+
+          prevBtn.classList.toggle("hidden", currentQuestionIndex === 0);
+          nextBtn.classList.toggle(
+            "hidden",
+            currentQuestionIndex === questions.length - 1
+          );
+          finishBtn.classList.toggle(
+            "hidden",
+            currentQuestionIndex !== questions.length - 1
+          );
+
+          saveBtn.disabled = isSaved;
+          saveBtn.textContent = isSaved ? "Guardada" : "Guardar Respuesta";
+
+          document
+            .querySelectorAll(".question-grid-item")
+            .forEach((item, i) => {
+              item.classList.remove("current", "answered");
+              if (i === currentQuestionIndex) item.classList.add("current");
+              if (savedAnswers[questions[i].unique_id])
+                item.classList.add("answered");
+            });
+        }
+
+        function updateProgressBar() {
+          const answeredCount = Object.keys(savedAnswers).length;
+          const progress = (answeredCount / questions.length) * 100;
+          progressBarInnerEl.style.width = `${progress}%`;
+          progressTextEl.textContent = `${answeredCount}/${questions.length}`;
+        }
+
+        // --- INICIO DE MODIFICACIÓN PARA MÚLTIPLES ESPACIOS ---
+        function initCompletar(questionId) {
+          const palabras = document.querySelectorAll(".palabra-item");
+          const blanks = document.querySelectorAll(
+            `.blank-space[data-question-id="${questionId}"]`
+          );
+
+          // Asegurarse de que userAnswers[questionId] sea un objeto si no existe
+          if (!userAnswers[questionId]) {
+            userAnswers[questionId] = {};
+          }
+
+          palabras.forEach((palabra) => {
+            palabra.addEventListener("dragstart", (e) =>
+              e.dataTransfer.setData("text/plain", e.target.innerText)
+            );
+          });
+
+          blanks.forEach((blank) => {
+            blank.addEventListener("dragover", (e) => {
+              e.preventDefault();
+              blank.classList.add("over");
+            });
+            blank.addEventListener("dragleave", () =>
+              blank.classList.remove("over")
+            );
+            blank.addEventListener("drop", (e) => {
+              e.preventDefault();
+              blank.classList.remove("over");
+              const data = e.dataTransfer.getData("text");
+              const index = e.target.dataset.blankIndex; // Obtener el índice del espacio
+              e.target.textContent = data;
+              userAnswers[questionId][index] = data; // Guardar en el objeto por índice
+            });
+          });
+        }
+        // --- FIN DE MODIFICACIÓN ---
+
+        let relacionarState = { start: null };
+        function initRelacionar(questionId) {
+          const container = document.getElementById(
+            `relacionar-container-${questionId}`
+          );
+          if (!userAnswers[questionId]) userAnswers[questionId] = {};
+
+          container.addEventListener("click", (e) => {
+            if (!e.target.classList.contains("relacionar-item")) return;
+            const item = e.target;
+            const column = item.dataset.column;
+            const index = item.dataset.index;
+
+            if (!relacionarState.start) {
+              if (
+                Object.values(userAnswers[questionId]).includes(index) &&
+                column === "b"
+              )
+                return;
+              relacionarState.start = { item, column, index };
+              item.classList.add("selected");
+            } else {
+              if (relacionarState.start.item === item) {
+                item.classList.remove("selected");
+                relacionarState.start = null;
+                return;
+              }
+              if (relacionarState.start.column === column) {
+                relacionarState.start.item.classList.remove("selected");
+                relacionarState.start = { item, column, index };
+                item.classList.add("selected");
+              } else {
+                const key =
+                  relacionarState.start.column === "a"
+                    ? relacionarState.start.index
+                    : index;
+                const value =
+                  relacionarState.start.column === "b"
+                    ? relacionarState.start.index
+                    : index;
+                if (Object.values(userAnswers[questionId]).includes(value)) {
+                  relacionarState.start.item.classList.remove("selected");
+                  relacionarState.start = null;
+                  return;
+                }
+                userAnswers[questionId][key] = value;
+                relacionarState.start.item.classList.remove("selected");
+                relacionarState.start = null;
+                drawRelacionarLines(questionId);
+              }
+            }
+          });
+          drawRelacionarLines(questionId);
+        }
+
+        function drawRelacionarLines(questionId) {
+          const canvas = document.getElementById(
+            `relacionar-canvas-${questionId}`
+          );
+          if (!canvas) return;
+          const container = canvas.parentElement;
+          const ctx = canvas.getContext("2d");
+          canvas.width = container.offsetWidth;
+          canvas.height = container.offsetHeight;
+
+          const connections =
+            savedAnswers[questionId] || userAnswers[questionId] || {};
+
+          for (const [startIdx, endIdx] of Object.entries(connections)) {
+            const startEl = container.querySelector(
+              `.relacionar-item[data-column="a"][data-index="${startIdx}"]`
+            );
+            const endEl = container.querySelector(
+              `.relacionar-item[data-column="b"][data-index="${endIdx}"]`
+            );
+            if (startEl && endEl) {
+              const startRect = startEl.getBoundingClientRect();
+              const endRect = endEl.getBoundingClientRect();
+              const containerRect = container.getBoundingClientRect();
+              const startX = startRect.right - containerRect.left;
+              const startY =
+                startRect.top + startRect.height / 2 - containerRect.top;
+              const endX = endRect.left - containerRect.left;
+              const endY = endRect.top + endRect.height / 2 - containerRect.top;
+              ctx.beginPath();
+              ctx.moveTo(startX, startY);
+              ctx.lineTo(endX, endY);
+              ctx.strokeStyle = "var(--color-brand)";
+              ctx.lineWidth = 3;
+              ctx.stroke();
+            }
+          }
+        }
+
+        function createQuestionGrid() {
+          questionGridEl.innerHTML = "";
+          questions.forEach((q, index) => {
+            const item = document.createElement("div");
+            item.className = "question-grid-item";
+            item.textContent = index + 1;
+            item.addEventListener("click", () => {
+              if (currentQuestionIndex !== index) {
+                if (!savedAnswers[questions[currentQuestionIndex].unique_id]) {
+                  clearTemporaryAnswer(
+                    questions[currentQuestionIndex].unique_id
+                  );
+                }
+                currentQuestionIndex = index;
+                displayQuestion(currentQuestionIndex);
+              }
+            });
+            questionGridEl.appendChild(item);
+          });
+        }
+
+        function startTimer() {
+          timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+              timeLeft--;
+              const minutes = Math.floor(timeLeft / 60);
+              const seconds = timeLeft % 60;
+              timerEl.textContent = `${minutes
+                .toString()
+                .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+              if (timeLeft < 60 && !timerEl.classList.contains("ending"))
+                timerEl.classList.add("ending");
+            } else {
+              clearInterval(timerInterval);
+              finishQuiz("timeout");
+            }
+          }, 1000);
+        }
+
+        async function finishQuiz(reason = "user") {
+          window.removeEventListener("beforeunload", handleBeforeUnload);
+          clearInterval(timerInterval);
+
+          // --- INICIO DE MODIFICACIÓN PARA ENVIAR TIEMPO ---
+          const totalDuration = duracionMinutos * 60;
+          const timeTaken = totalDuration - timeLeft;
+          // --- FIN DE MODIFICACIÓN ---
+
+          try {
+            const response = await fetch("/api/examen/finalizar", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              // --- INICIO DE MODIFICACIÓN PARA ENVIAR TIEMPO ---
+              body: JSON.stringify({
+                id_instrumento: idInstrumento,
+                respuestas: savedAnswers,
+                tiempo_tomado: timeTaken, // Se envía el tiempo calculado
+              }),
+              // --- FIN DE MODIFICACIÓN ---
+            });
+            const result = await response.json();
+            if (result.success) {
+              confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+              window.location.href = `/aprendiz?calificacion=${result.calificacion}`;
+            } else {
+              alert(
+                `Error al finalizar el examen: ${
+                  result.error || "Error desconocido"
+                }`
+              );
+              window.location.href = "/aprendiz";
+            }
+          } catch (error) {
+            alert("Error de red al finalizar el examen.");
+            window.location.href = "/aprendiz";
+          }
+        }
+
+        function handleBeforeUnload(e) {
+          e.preventDefault();
+          leaveConfirmModal.classList.add("visible");
+          e.returnValue = "";
+        }
+
+        prevBtn.addEventListener("click", () => {
+          if (currentQuestionIndex > 0) {
+            if (!savedAnswers[questions[currentQuestionIndex].unique_id]) {
+              clearTemporaryAnswer(questions[currentQuestionIndex].unique_id);
+            }
+            currentQuestionIndex--;
+            displayQuestion(currentQuestionIndex);
+          }
+        });
+
+        nextBtn.addEventListener("click", () => {
+          if (currentQuestionIndex < questions.length - 1) {
+            if (!savedAnswers[questions[currentQuestionIndex].unique_id]) {
+              clearTemporaryAnswer(questions[currentQuestionIndex].unique_id);
+            }
+            currentQuestionIndex++;
+            displayQuestion(currentQuestionIndex);
+          }
+        });
+
+        saveBtn.addEventListener("click", () => {
+          const questionId = questions[currentQuestionIndex].unique_id;
+          const tempAnswer = userAnswers[questionId];
+          const questionType = questions[currentQuestionIndex].tipo;
+          const currentQuestion = questions[currentQuestionIndex];
+
+          let isValidAnswer = false;
+          
+          // --- INICIO DE MODIFICACIÓN VALIDACIÓN ---
+          if (questionType === "relacionar") {
+            const numPairs = currentQuestion.opciones.length;
+            isValidAnswer =
+              tempAnswer &&
+              typeof tempAnswer === "object" &&
+              Object.keys(tempAnswer).length === numPairs;
+          } else if (questionType === "completar") {
+            const numBlanks = currentQuestion.numBlanks;
+            isValidAnswer =
+              tempAnswer &&
+              typeof tempAnswer === "object" &&
+              Object.keys(tempAnswer).length === numBlanks &&
+              Object.values(tempAnswer).every((val) => val && val.trim() !== ""); // Valida que todos los espacios estén llenos
+          } else {
+            // Lógica para 'seleccion_multiple'
+            isValidAnswer = !!tempAnswer; // Simplemente verifica que no esté vacío o nulo
+          }
+          // --- FIN DE MODIFICACIÓN VALIDACIÓN ---
+
+          if (isValidAnswer) {
+            savedAnswers[questionId] = tempAnswer;
+            delete userAnswers[questionId];
+            updateProgressBar();
+            displayQuestion(currentQuestionIndex);
+          } else {
+            alert("Por favor, completa tu respuesta antes de guardar.");
+          }
+        });
+
+        closeImageModalBtn.addEventListener("click", () =>
+          imageModal.classList.remove("visible")
+        );
+        imageModal.addEventListener("click", (e) => {
+          if (e.target === imageModal) imageModal.classList.remove("visible");
+        });
+
+        finishBtn.addEventListener("click", () =>
+          confirmModal.classList.add("visible")
+        );
+        document
+          .getElementById("cancel-submit-btn")
+          .addEventListener("click", () =>
+            confirmModal.classList.remove("visible")
+          );
+        document
+          .getElementById("confirm-submit-btn")
+          .addEventListener("click", () => {
+            confirmModal.classList.remove("visible");
+            finishQuiz("user");
+          });
+        document
+          .getElementById("stay-btn")
+          .addEventListener("click", () =>
+            leaveConfirmModal.classList.remove("visible")
+          );
+        document.getElementById("leave-btn").addEventListener("click", () => {
+          leaveConfirmModal.classList.remove("visible");
+          finishQuiz("leave");
+        });
+
+        fetchQuestions();
+      });
+    </script>
+    <!-- FIN DEL SCRIPT ACTUALIZADO -->
+  </body>
+</html>

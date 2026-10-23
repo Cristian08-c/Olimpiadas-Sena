@@ -1,0 +1,55 @@
+/*
+COMPONENTE: Formularios Reutilizables
+DESCRIPCIÓN: Estilos para todos los elementos de formulario del sistema.
+EXTRAÍDO DESDE: css/styles.css - formulario de login consolidado
+*/
+
+/* Contenedor principal del formulario - fusionado desde styles.css */
+.login-form,
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Grupo de campo (label + input) - fusionado desde styles.css */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Etiquetas de campos - fusionado desde styles.css */
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  outline: none;
+  transition: all var(--transition-fast);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+}
+
+.form-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--focus-ring-brand);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.form-error {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  min-height: 1.2em; /* Evita saltos de layout cuando aparece el error */
+}

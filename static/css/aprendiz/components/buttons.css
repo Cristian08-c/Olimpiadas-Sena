@@ -1,0 +1,80 @@
+/*
+COMPONENTE: Botones Reutilizables
+DESCRIPCIÓN: Estilos base y variantes para todos los botones del sistema.
+EXTRAÍDO DESDE: css/styles.css y css/evaluaciones.css
+*/
+
+/* Clase base para todos los botones - fusionado desde styles.css */
+.btn,
+.button,
+.submit-button {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  line-height: 1;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Botón primario - Color de marca - fusionado desde styles.css */
+.btn-primary,
+.button-primary,
+.submit-button {
+  background-color: var(--color-brand);
+  color: var(--color-white);
+}
+
+.btn-primary:hover,
+.button-primary:hover,
+.submit-button:hover {
+  background-color: var(--color-brand-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-brand);
+}
+
+.btn-primary:active,
+.submit-button:active {
+  transform: translateY(0);
+}
+
+.btn:disabled,
+.button:disabled,
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botón de tema circular - fusionado desde evaluaciones.css */
+.theme-toggle {
+  background: var(--color-white);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  color: var(--color-text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  user-select: none;
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+.theme-toggle .hidden {
+  display: none;
+}

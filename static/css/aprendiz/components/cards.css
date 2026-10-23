@@ -1,0 +1,115 @@
+/*
+EXPLICACIÓN:
+Componente de tarjeta. Centraliza todos los estilos relacionados con
+las tarjetas de evaluación. Esto hace que sea fácil de modificar y
+reutilizar en otras partes del sitio si es necesario.
+*/
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.card {
+  background: var(--color-white);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0,0,0,0.05);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  position: relative;
+  border: 1px solid var(--color-border);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.05), 0 12px 24px var(--shadow-brand);
+  border-color: var(--color-brand);
+}
+
+.card:hover::before {
+  transform: scaleX(1);
+}
+
+.card-image-container {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .card-image {
+  transform: scale(1.08);
+}
+
+.card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-grow: 1; /* Asegura que todas las tarjetas tengan la misma altura */
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background-light);
+  border-radius: 0.75rem;
+  color: var(--color-brand);
+  transition: all var(--transition-normal);
+}
+
+body[data-theme="dark"] .card-icon {
+  background: #1f2937;
+}
+
+.card:hover .card-icon {
+  background: var(--color-brand);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-top: 0.25rem;
+}
+
+.card-description {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+/* Animaciones de entrada escalonadas */
+.card:nth-child(1) { animation: slideUpFadeIn 0.6s ease-out 0.3s both; }
+.card:nth-child(2) { animation: slideUpFadeIn 0.6s ease-out 0.4s both; }
+.card:nth-child(3) { animation: slideUpFadeIn 0.6s ease-out 0.5s both; }

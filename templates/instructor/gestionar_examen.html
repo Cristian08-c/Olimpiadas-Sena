@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestionar Examen - {{ examen.titulo }}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/gestionar_examen.css') }}"
+    />
+    <!-- 
+      INICIO DE CAMBIOS (CSS PARA CHULITO)
+      Estilos para la solicitud 2: Convertir radio button en chulito
+    -->
+    <style>
+      .opcion-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .opcion-item .opcion-texto-seleccion {
+        flex-grow: 1;
+      }
+
+      /* Estilo personalizado para el radio button */
+      .radio-chulito-label {
+        display: inline-block;
+        position: relative;
+        padding-left: 30px; /* espacio para el radio personalizado */
+        cursor: pointer;
+        user-select: none;
+        /* Centrar verticalmente con el input de texto */
+        height: 22px;
+        line-height: 22px;
+      }
+      .radio-chulito-label input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+      }
+      .radio-chulito-span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 22px;
+        width: 22px;
+        background-color: #eee;
+        border: 1px solid #ccc;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+      }
+      .radio-chulito-label:hover input ~ .radio-chulito-span {
+        background-color: #ddd;
+      }
+      .radio-chulito-label input:checked ~ .radio-chulito-span {
+        /* Asumiendo que --color-exito está definido, si no, usa un verde fallback */
+        background-color: var(--color-exito, #28a745);
+        border-color: var(--color-exito, #28a745);
+      }
+      .radio-chulito-span::after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 7px;
+        top: 3px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+      }
+      .radio-chulito-label input:checked ~ .radio-chulito-span::after {
+        display: block;
+      }
+
+      /* INICIO: Estilos para los nuevos controles de asignación */
+      .asignar-controles-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+      .asignar-controles-container input[type="text"] {
+        flex: 1 1 200px;
+        min-width: 150px;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      .asignar-controles-container button {
+        flex: 1 1 auto;
+        padding: 8px 12px;
+        background-color: #6c757d; /* btn-secondary */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: background-color 0.2s;
+      }
+      .asignar-controles-container button:hover {
+        background-color: #5a6268;
+      }
+      /* FIN: Estilos para los nuevos controles de asignación */
+    </style>
+    <!-- FIN DE CAMBIOS -->
+  </head>
+  <body>
+    <div class="contenido">
+      <header class="header">
+        <div>
+          <h2 id="examen-titulo">Gestionar Examen: {{ examen.titulo }}</h2>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-top: 5px;
+            "
+          >
+            <span>Estado:</span>
+            <span
+              id="examen-estado-badge"
+              class="estado-badge estado-{{ examen.estado }}"
+              >{{ examen.estado.capitalize() }}</span
+            >
+            <!-- Info de Fase añadida para claridad -->
+            <span
+              style="
+                margin-left: 15px;
+                background-color: #e0e0e0;
+                padding: 3px 8px;
+                border-radius: 12px;
+                font-size: 0.9em;
+                font-weight: 500;
+              "
+              >Fase: {{ examen['fase(1-2)'] }}</span
+            >
+          </div>
+        </div>
+        <button
+          onclick="window.location.href='/instructor'"
+          class="btn btn-secondary"
+        >
+          ← Volver
+        </button>
+      </header>
+      <div class="botones-accion">
+        <button id="btn-nueva-pregunta" class="btn btn-primary">
+          + Nueva Pregunta
+        </button>
+        <button id="btn-publicar" class="btn btn-success">
+          Publicar Examen
+        </button>
+        <button id="btn-asignar" class="btn btn-warning">Asignar Examen</button>
+        {% if examen['fase(1-2)'] == 1 %}
+        <a
+          href="{{ url_for('ver_ranking', id_instrumento=examen.id_instrumento) }}"
+          class="btn btn-info"
+          >Ver Ranking</a
+        >
+        {% endif %}
+        <button id="btn-vista-previa" class="btn btn-info">Vista Previa</button>
+      </div>
+      <div class="gestion-container">
+        <!-- Panel del editor -->
+        <div class="panel" id="panel-editor">
+          <h3 id="editor-titulo">Editor de Preguntas</h3>
+          <div id="editor-vacio" class="mensaje-vacio">
+            <p>Selecciona una pregunta para editarla o crea una nueva.</p>
+          </div>
+          <div id="editor-activo" style="display: none">
+            <input type="hidden" id="id_pregunta_edit" /><input
+              type="hidden"
+              id="tipo_tabla_edit"
+            />
+            <div class="form-group">
+              <label>Paso 1: Selecciona el tipo de pregunta</label>
+              <div class="tipo-selector">
+                <div class="tipo-card" data-tipo="completar">
+                  <h4>Completar 📝</h4>
+                </div>
+                <div class="tipo-card" data-tipo="seleccion_multiple">
+                  <h4>Selección ☑️</h4>
+                </div>
+                <div class="tipo-card" data-tipo="relacionar">
+                  <h4>Relacionar 🔗</h4>
+                </div>
+              </div>
+            </div>
+            <div id="editor-formularios">
+              <div class="form-group">
+                <label>Paso 2: Completa los detalles</label>
+              </div>
+              <div class="form-group">
+                <label>Imagen (opcional)</label>
+                <input
+                  type="file"
+                  id="archivo"
+                  name="archivo"
+                  accept="image/*"
+                />
+                <div
+                  id="imagen-previa-container"
+                  style="margin-top: 10px; text-align: center"
+                ></div>
+              </div>
+              <div class="form-group">
+                <label>Enunciado (opcional)</label
+                ><textarea id="enunciado" placeholder="Contexto..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Puntos *</label
+                ><input type="number" id="puntos" value="10" min="1" required />
+              </div>
+              <div id="form-completar" class="form-container">
+                <div class="form-group">
+                  <label>Pregunta con espacios [____] *</label
+                  ><textarea
+                    id="pregunta-completar"
+                    rows="3"
+                    placeholder="Ej: La capital de Francia es [____]..."
+                  ></textarea>
+                </div>
+                <label class="sub-label">Respuestas correctas *</label>
+                <div id="opciones-completar-correctas"></div>
+                <label class="sub-label">Opciones distractoras</label>
+                <div id="opciones-completar-distractoras"></div>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  onclick="agregarOpcionCompletarDistractora()"
+                >
+                  + Distractor
+                </button>
+              </div>
+              <div id="form-seleccion_multiple" class="form-container">
+                <div class="form-group">
+                  <label>Pregunta *</label
+                  ><input
+                    type="text"
+                    id="pregunta-seleccion_multiple"
+                    placeholder="Ej: ¿Cuál es la capital de Colombia?"
+                  />
+                </div>
+                <label class="sub-label">Opciones (marca la correcta) *</label>
+                <div id="opciones-seleccion_multiple"></div>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  onclick="agregarOpcionSeleccion()"
+                >
+                  + Opción
+                </button>
+              </div>
+              <div id="form-relacionar" class="form-container">
+                <div class="form-group">
+                  <label>Título de la pregunta *</label
+                  ><input
+                    type="text"
+                    id="pregunta-relacionar"
+                    placeholder="Ej: Relaciona los países con sus capitales"
+                  />
+                </div>
+                <label class="sub-label">Pares correctos *</label>
+                <div id="pares-relacionar"></div>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  onclick="agregarParRelacionar()"
+                >
+                  + Agregar Par
+                </button>
+              </div>
+              <div
+                style="
+                  margin-top: 20px;
+                  display: flex;
+                  gap: 10px;
+                  border-top: 1px solid #eee;
+                  padding-top: 20px;
+                "
+              >
+                <button id="btn-guardar-pregunta" class="btn btn-success">
+                  Guardar Pregunta
+                </button>
+                <button id="btn-cancelar" class="btn btn-secondary">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Panel de la lista de preguntas -->
+        <div class="panel">
+          <h3>Preguntas del Examen</h3>
+          <div class="lista-preguntas" id="lista-preguntas">
+            <div class="mensaje-vacio"><p>Aún no hay preguntas.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de vista previa -->
+    <div id="modal-vista-previa" class="modal">
+      <div class="modal-contenido">
+        <div class="modal-header">
+          <h2 id="vista-previa-titulo">Vista Previa del Examen</h2>
+          <span class="modal-cerrar">&times;</span>
+        </div>
+        <div class="modal-body" id="vista-previa-body">
+          <!-- El contenido de la pregunta se inyectará aquí -->
+        </div>
+        <div
+          class="modal-footer"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <button id="btn-anterior" class="btn btn-secondary">Anterior</button>
+          <span id="contador-paginas" class="contador-paginas"></span>
+          <button id="btn-siguiente" class="btn btn-primary">Siguiente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Asignar Fichas -->
+    <div id="modal-asignar-fichas" class="modal">
+      <div class="modal-contenido-asignar">
+        <div class="modal-header">
+          <h2>Asignar Examen a Fichas</h2>
+          <span class="modal-cerrar-asignar">&times;</span>
+        </div>
+        <div class="modal-body-asignar">
+          <p>
+            Selecciona las fichas a las que deseas asignar este examen.
+          </p>
+          <div class="asignar-fechas-container">
+            <div class="form-group">
+              <label for="fecha-inicio">Fecha de Inicio *</label>
+              <input
+                type="datetime-local"
+                id="fecha-inicio"
+                name="fecha-inicio"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="fecha-fin">Fecha de Fin *</label>
+              <input
+                type="datetime-local"
+                id="fecha-fin"
+                name="fecha-fin"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- INICIO: Filtro y botones de selección -->
+          <div class="asignar-controles-container">
+            <input
+              type="text"
+              id="filtro-fichas"
+              placeholder="Buscar por nombre o número..."
+            />
+            <button id="btn-seleccionar-todas">Seleccionar Todas</button>
+            <button id="btn-deseleccionar-todas">Deseleccionar Todas</button>
+          </div>
+          <!-- FIN: Filtro y botones de selección -->
+
+          <div id="lista-fichas-asignar" class="lista-fichas-container">
+            <!-- Las fichas se cargarán aquí dinámicamente -->
+            <div class="loader"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-cancelar-asignacion" class="btn btn-secondary">
+            Cancelar
+          </button>
+          <button id="btn-confirmar-asignacion" class="btn btn-success">
+            Asignar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Variables globales
+      const ID_INSTRUMENTO = {{ examen.id_instrumento }};
+      let estadoExamen = '{{ examen.estado }}';
+      // --- INICIO DE CORRECCIÓN (Req 1) ---
+      // Añadimos la fase del examen para controlar la visibilidad del botón 'Asignar'
+      const FASE_EXAMEN = {{ examen['fase(1-2)'] }};
+      // --- FIN DE CORRECCIÓN ---
+      let preguntas = [];
+      let tipoActual = null;
+      let modoEdicion = false;
+
+      // Función auxiliar para mostrar mensajes
+      function mostrarMensaje(mensaje, tipo) {
+          const div = document.createElement('div');
+          div.className = `alert alert-${tipo}`;
+          div.textContent = mensaje;
+          const contenido = document.querySelector('.contenido');
+          contenido.insertBefore(div, document.querySelector('.botones-accion'));
+          setTimeout(() => div.remove(), 5000);
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+          preguntas = {{ preguntas|tojson }};
+          renderizarListaPreguntas();
+          actualizarUIporEstado();
+
+          document.getElementById('archivo').addEventListener('change', function(event) {
+              const previewContainer = document.getElementById('imagen-previa-container');
+              previewContainer.innerHTML = '';
+              if (event.target.files && event.target.files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = function(e) {
+                      previewContainer.innerHTML = `
+                          <p>Previsualización de nueva imagen:</p>
+                          <img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                      `;
+                  }
+                  reader.readAsDataURL(event.target.files[0]);
+              }
+          });
+
+          // --- INICIO: Lógica de Filtro y Selección de Fichas ---
+
+          // Filtro de búsqueda
+          document.getElementById('filtro-fichas').addEventListener('input', (e) => {
+              const filtro = e.target.value.toLowerCase().trim();
+              const fichas = document.querySelectorAll('#lista-fichas-asignar .ficha-card-asignar');
+
+              fichas.forEach(ficha => {
+                  const infoDiv = ficha.querySelector('.ficha-card-info');
+                  if (!infoDiv) return;
+
+                  // Extraer texto del nombre (es el nodo de texto después del <strong>)
+                  const nombreNode = infoDiv.querySelector('p strong');
+                  const nombre = nombreNode ? (nombreNode.nextSibling ? nombreNode.nextSibling.textContent.toLowerCase().trim() : '') : '';
+                  const numero = infoDiv.querySelector('h4').textContent.toLowerCase().replace('ficha', '').trim();
+
+                  const coincide = nombre.includes(filtro) || numero.includes(filtro);
+
+                  ficha.style.display = coincide ? 'flex' : 'none';
+              });
+          });
+
+          // Seleccionar todas (visibles)
+          document.getElementById('btn-seleccionar-todas').addEventListener('click', () => {
+              document.querySelectorAll('#lista-fichas-asignar .ficha-card-asignar').forEach(ficha => {
+                  // Solo selecciona las visibles y no deshabilitadas
+                  if (ficha.style.display !== 'none') {
+                      const checkbox = ficha.querySelector('input[type="checkbox"]:not(:disabled)');
+                      if (checkbox) {
+                          checkbox.checked = true;
+                      }
+                  }
+              });
+          });
+
+          // Deseleccionar todas (visibles)
+          document.getElementById('btn-deseleccionar-todas').addEventListener('click', () => {
+              document.querySelectorAll('#lista-fichas-asignar .ficha-card-asignar').forEach(ficha => {
+                  // Solo deselecciona las visibles y no deshabilitadas
+                  if (ficha.style.display !== 'none') {
+                      const checkbox = ficha.querySelector('input[type="checkbox"]:not(:disabled)');
+                      if (checkbox) {
+                          checkbox.checked = false;
+                      }
+                  }
+              });
+          });
+          // --- FIN: Lógica de Filtro y Selección de Fichas ---
+      });
+
+      document.getElementById('btn-nueva-pregunta').addEventListener('click', () => {
+          modoEdicion = false;
+          limpiarEditor();
+          document.getElementById('editor-titulo').textContent = 'Crear Nueva Pregunta';
+          document.getElementById('editor-vacio').style.display = 'none';
+          document.getElementById('editor-activo').style.display = 'block';
+      });
+      document.getElementById('btn-cancelar').addEventListener('click', () => {
+          document.getElementById('editor-vacio').style.display = 'block';
+          document.getElementById('editor-activo').style.display = 'none';
+          limpiarEditor();
+      });
+      document.querySelectorAll('.tipo-card').forEach(card => card.addEventListener('click', () => seleccionarTipo(card.dataset.tipo)));
+
+      function seleccionarTipo(tipo) {
+          if (modoEdicion) return;
+          tipoActual = tipo;
+          document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('active'));
+          document.querySelector(`.tipo-card[data-tipo="${tipo}"]`).classList.add('active');
+          document.getElementById('editor-formularios').style.display = 'block';
+          document.querySelectorAll('.form-container').forEach(f => { f.style.display = 'none'; f.classList.remove('active'); });
+          const form = document.getElementById(`form-${tipo}`);
+          form.style.display = 'block';
+          form.classList.add('active');
+          if (tipo === 'seleccion_multiple' && !document.getElementById('opciones-seleccion_multiple').children.length) {
+              agregarOpcionSeleccion();
+              agregarOpcionSeleccion();
+          } else if (tipo === 'relacionar' && !document.getElementById('pares-relacionar').children.length) {
+              agregarParRelacionar();
+              agregarParRelacionar();
+          }
+      }
+
+      function limpiarEditor() {
+          modoEdicion = false;
+          tipoActual = null;
+          document.getElementById('editor-activo').querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(i => i.value = '');
+          document.getElementById('archivo').value = '';
+          document.getElementById('puntos').value = '10';
+          ['opciones-completar-correctas', 'opciones-completar-distractoras', 'opciones-seleccion_multiple', 'pares-relacionar', 'imagen-previa-container'].forEach(id => document.getElementById(id).innerHTML = '');
+          document.getElementById('pregunta-completar').addEventListener('input', actualizarOpcionesCompletar);
+          document.getElementById('editor-formularios').style.display = 'none';
+          document.querySelectorAll('.tipo-card.active, .form-container.active').forEach(el => el.classList.remove('active'));
+      }
+
+      const modalVP = document.getElementById('modal-vista-previa');
+      const btnAbrirVP = document.getElementById('btn-vista-previa');
+      const btnCerrarVP = modalVP.querySelector('.modal-cerrar');
+      let paginaActual = 0;
+
+      btnAbrirVP.onclick = () => {
+          if (preguntas.length === 0) { alert('Añade al menos una pregunta.'); return; }
+          generarContenidoVistaPrevia();
+          paginaActual = 0;
+          mostrarPagina(paginaActual);
+          modalVP.style.display = 'block';
+      };
+      btnCerrarVP.onclick = () => modalVP.style.display = 'none';
+      window.addEventListener('click', (e) => {
+        if (e.target == modalVP) modalVP.style.display = 'none';
+        if (e.target == document.getElementById('modal-asignar-fichas')) document.getElementById('modal-asignar-fichas').style.display = 'none';
+      });
+      document.getElementById('btn-anterior').onclick = () => { if (paginaActual > 0) { paginaActual--; mostrarPagina(paginaActual); } };
+      document.getElementById('btn-siguiente').onclick = () => { if (paginaActual < preguntas.length - 1) { paginaActual++; mostrarPagina(paginaActual); } };
+
+      function mostrarPagina(index) {
+          document.querySelectorAll('.vista-previa-paginacion').forEach(p => p.style.display = 'none');
+
+          const svg = document.getElementById('relacionar-svg-overlay');
+          if (svg) {
+              svg.querySelectorAll('line').forEach(line => line.style.display = 'none');
+              svg.querySelectorAll(`.line-for-question-${index}`).forEach(line => line.style.display = 'block');
+          }
+
+          const pagina = document.getElementById(`pagina-${index}`);
+          if(pagina) {
+              pagina.style.display = 'block';
+              if(preguntas[index].tipo === 'completar' && !pagina.dataset.dndInitialized) {
+                  initDragAndDrop();
+                  pagina.dataset.dndInitialized = 'true';
+              }
+              if(preguntas[index].tipo === 'relacionar' && !pagina.dataset.lineInitialized) {
+                  initLineDrawing();
+                  pagina.dataset.lineInitialized = 'true';
+              }
+          }
+          document.getElementById('contador-paginas').textContent = `Pregunta ${index + 1} de ${preguntas.length}`;
+          document.getElementById('btn-anterior').disabled = index === 0;
+          document.getElementById('btn-siguiente').disabled = index === preguntas.length - 1;
+      }
+
+      function generarContenidoVistaPrevia() {
+          const body = document.getElementById('vista-previa-body');
+          body.innerHTML = '';
+          let fullHtml = '';
+
+          preguntas.forEach((p, index) => {
+              const hasImage = p.archivo;
+              const hasEnunciado = p.enunciado && p.enunciado.trim() !== '';
+              const wrapperClass = 'pregunta-vista-wrapper';
+
+              let contenidoHtml = `<div class="vista-previa-paginacion" id="pagina-${index}" style="display: none;">
+                                    <div class="${wrapperClass}">`;
+
+              // --- COLUMNA IZQUIERDA ---
+              if (hasImage || hasEnunciado) {
+                  const infoColClass = hasImage && hasEnunciado ? 'pregunta-info-col has-both' : 'pregunta-info-col';
+                  contenidoHtml += `<div class="${infoColClass}">`;
+
+                  if (hasImage) {
+                      const imageUrl = `{{ url_for('static', filename='img/') }}${p.archivo}`;
+                      contenidoHtml += `<div class="info-box"><img src="${imageUrl}" class="pregunta-imagen"></div>`;
+                  }
+
+                  if (hasEnunciado) {
+                      contenidoHtml += `<div class="info-box"><div class="enunciado-texto">${p.enunciado}</div></div>`;
+                  }
+
+                  contenidoHtml += `</div>`;
+              }
+
+              // --- COLUMNA DERECHA ---
+              let preguntaContenido = `<div class="pregunta-contenido-col-inner">`;
+              preguntaContenido += `<h3>${p.pregunta} (${p.puntos} puntos)</h3>`;
+
+              if (p.tipo === 'completar') {
+                  const todasPalabras = p.opciones.map(o => o.texto).sort(() => Math.random() - 0.5);
+                  preguntaContenido += `<div class="palabras-disponibles-box"><h4>Palabras disponibles</h4><div class="palabras-grid" id="palabras-grid-${index}">${todasPalabras.map((palabra, i) => `<div class="palabra-arrastrable" draggable="true" id="palabra-${index}-${i}">${palabra}</div>`).join('')}</div></div>`;
+                  const preguntaConEspacios = p.pregunta.replace(/\[____\]/g, `<span class="espacio-completar-dropzone"></span>`);
+                  preguntaContenido += `<div class="pregunta-completar-wrapper">${preguntaConEspacios}</div>`;
+              } else if (p.tipo === 'relacionar') {
+                  const colA = p.opciones;
+                  let colB = [...p.opciones].sort(() => Math.random() - 0.5);
+                  let attempts = 0;
+                  while (attempts < 20) {
+                      let isPerfectlyShuffled = true;
+                      for (let i = 0; i < colA.length; i++) {
+                          if (colA[i].col_b === colB[i].col_b) {
+                              const swapIndex = (i + 1) % colB.length;
+                              [colB[i], colB[swapIndex]] = [colB[swapIndex], colB[i]];
+                              isPerfectlyShuffled = false;
+                          }
+                      }
+                      if(isPerfectlyShuffled) break;
+                      attempts++;
+                  }
+                  preguntaContenido += `<div class="relacionar-container" id="relacionar-container-${index}"><div class="relacionar-column">${colA.map((par, i) => `<div class="relacionar-item" data-id="a-${index}-${i}">${par.col_a}</div>`).join('')}</div><div></div><div class="relacionar-column">${colB.map((par, i) => `<div class="relacionar-item" data-id="b-${index}-${i}">${par.col_b}</div>`).join('')}</div></div>`;
+              } else if (p.tipo === 'seleccion_multiple') {
+                  preguntaContenido += `<div>${p.opciones.map(op => `<div style="padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1em; text-align: left;"><label style="display:flex; align-items:center; cursor:pointer;"><input type="radio" name="sel-${p.id}" style="width:20px; height:20px; margin-right: 15px;"> ${op.texto}</label></div>`).join('')}</div>`;
+              }
+              preguntaContenido += `</div>`;
+
+              if (hasImage || hasEnunciado) {
+                  contenidoHtml += `<div class="pregunta-contenido-col">${preguntaContenido}</div>`;
+              } else {
+                  contenidoHtml += `<div class="pregunta-contenido-col" style="flex: 1 1 100%;">${preguntaContenido}</div>`;
+              }
+
+              contenidoHtml += `</div></div>`;
+              fullHtml += contenidoHtml;
+          });
+
+          body.innerHTML = fullHtml + '<svg id="relacionar-svg-overlay"></svg>';
+      }
+
+      function initDragAndDrop() {
+          const page = document.getElementById(`pagina-${paginaActual}`);
+          if (!page) return;
+          const draggables = page.querySelectorAll(`.palabra-arrastrable`);
+          const dropzones = page.querySelectorAll(`.espacio-completar-dropzone`);
+          const wordBank = page.querySelector(`#palabras-grid-${paginaActual}`);
+          let draggedItem = null;
+
+          draggables.forEach(draggable => {
+              draggable.addEventListener('dragstart', (e) => {
+                  if (e.target.classList.contains('usada') && e.target.parentElement !== wordBank) { }
+                  else if (e.target.classList.contains('usada')) { e.preventDefault(); return; }
+                  draggedItem = e.target;
+                  setTimeout(() => e.target.style.visibility = 'hidden', 0);
+              });
+              draggable.addEventListener('dragend', () => {
+                  setTimeout(() => { if(draggedItem) { draggedItem.style.visibility = 'visible'; } draggedItem = null; }, 0);
+              });
+          });
+
+          dropzones.forEach(zone => {
+              zone.addEventListener('dragover', e => e.preventDefault());
+              zone.addEventListener('dragenter', e => e.target.closest('.espacio-completar-dropzone').classList.add('drag-over'));
+              zone.addEventListener('dragleave', e => e.target.closest('.espacio-completar-dropzone').classList.remove('drag-over'));
+              zone.addEventListener('drop', e => {
+                  e.preventDefault();
+                  const dropzone = e.target.closest('.espacio-completar-dropzone');
+                  dropzone.classList.remove('drag-over');
+                  if (dropzone.children.length > 0) {
+                      const existingWord = dropzone.firstElementChild;
+                      wordBank.appendChild(existingWord);
+                      existingWord.classList.remove('usada');
+                  }
+                  dropzone.appendChild(draggedItem);
+                  draggedItem.classList.add('usada');
+              });
+          });
+
+          if(wordBank) {
+              wordBank.addEventListener('dragover', e => e.preventDefault());
+              wordBank.addEventListener('drop', e => {
+                  e.preventDefault();
+                  if (draggedItem && draggedItem.parentElement.classList.contains('espacio-completar-dropzone')) {
+                      wordBank.appendChild(draggedItem);
+                      draggedItem.classList.remove('usada');
+                  }
+              });
+          }
+      }
+
+      function initLineDrawing() {
+          const container = document.querySelector(`#relacionar-container-${paginaActual}`);
+          if (!container) return;
+          const svg = document.getElementById('relacionar-svg-overlay');
+          const scrollContainer = document.getElementById('vista-previa-body');
+          let startNode = null;
+          let tempLine = null;
+
+          function getConnectorPoint(node) {
+              const svgRect = svg.getBoundingClientRect();
+              const nodeRect = node.getBoundingClientRect();
+              const isLeftColumn = node.parentElement.classList.contains('relacionar-column') && node.parentElement.nextElementSibling !== null;
+              const x = (isLeftColumn ? nodeRect.right : nodeRect.left) - svgRect.left;
+              const y = (nodeRect.top + nodeRect.height / 2) - svgRect.top;
+              return { x, y };
+          }
+
+          const items = container.querySelectorAll('.relacionar-item');
+          items.forEach(item => {
+              item.addEventListener('click', (e) => {
+                  const clickedNode = e.target;
+                  if (clickedNode.dataset.connectedTo) {
+                      const partnerId = clickedNode.dataset.connectedTo;
+                      const partnerNode = container.querySelector(`[data-id="${partnerId}"]`);
+                      const lineId = clickedNode.dataset.lineId;
+                      delete clickedNode.dataset.connectedTo;
+                      delete clickedNode.dataset.lineId;
+                      if (partnerNode) {
+                          delete partnerNode.dataset.connectedTo;
+                          delete partnerNode.dataset.lineId;
+                      }
+                      const lineToRemove = svg.querySelector(`#${lineId}`);
+                      if (lineToRemove) svg.removeChild(lineToRemove);
+                      return;
+                  }
+
+                  if (!startNode) {
+                      startNode = clickedNode;
+                      startNode.classList.add('selected');
+                      tempLine = createSvgLine();
+                      svg.appendChild(tempLine);
+                  } else {
+                      const isConnectable = startNode !== clickedNode && startNode.parentElement !== clickedNode.parentElement && !clickedNode.dataset.connectedTo;
+                      if (isConnectable) {
+                          const startCoords = getConnectorPoint(startNode);
+                          const endCoords = getConnectorPoint(clickedNode);
+                          tempLine.setAttribute('x1', startCoords.x);
+                          tempLine.setAttribute('y1', startCoords.y);
+                          tempLine.setAttribute('x2', endCoords.x);
+                          tempLine.setAttribute('y2', endCoords.y);
+                          tempLine.setAttribute('stroke', 'var(--color-primario)');
+                          tempLine.setAttribute('stroke-dasharray', 'none');
+                          const lineId = `line-${startNode.dataset.id}-${clickedNode.dataset.id}`;
+                          tempLine.id = lineId;
+                          tempLine.classList.add(`line-for-question-${paginaActual}`);
+                          startNode.dataset.connectedTo = clickedNode.dataset.id;
+                          clickedNode.dataset.connectedTo = startNode.dataset.id;
+                          startNode.dataset.lineId = lineId;
+                          clickedNode.dataset.lineId = lineId;
+                      } else {
+                          if (tempLine) svg.removeChild(tempLine);
+                      }
+                      startNode.classList.remove('selected');
+                      startNode = null;
+                      tempLine = null;
+                  }
+              });
+          });
+
+          scrollContainer.addEventListener('mousemove', (e) => {
+              if (startNode && tempLine) {
+                  const svgRect = svg.getBoundingClientRect();
+                  const startCoords = getConnectorPoint(startNode);
+                  tempLine.setAttribute('x1', startCoords.x);
+                  tempLine.setAttribute('y1', startCoords.y);
+                  tempLine.setAttribute('x2', e.clientX - svgRect.left);
+                  tempLine.setAttribute('y2', e.clientY - svgRect.top);
+              }
+          });
+
+          function createSvgLine() {
+              const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line.setAttribute('stroke', '#ffc107');
+              line.setAttribute('stroke-width', '4');
+              line.setAttribute('stroke-dasharray', '5,5');
+              return line;
+          }
+      }
+
+      document.getElementById('btn-guardar-pregunta').addEventListener('click', async () => {
+          const data = recolectarDatosPregunta();
+          if (!data) return;
+          const url = modoEdicion ? `/examen/${ID_INSTRUMENTO}/pregunta/actualizar` : `/examen/${ID_INSTRUMENTO}/pregunta/crear`;
+          try {
+              const response = await fetch(url, { method: 'POST', body: data });
+              if (!response.ok) { const error = await response.json(); throw new Error(error.error || 'Error'); }
+              const guardada = await response.json();
+              if (modoEdicion) {
+                  const index = preguntas.findIndex(p => p.id == guardada.id && p.tipo_tabla === guardada.tipo_tabla);
+                  if (index !== -1) preguntas[index] = guardada;
+              } else { preguntas.push(guardada); }
+              renderizarListaPreguntas();
+              document.getElementById('btn-cancelar').click();
+          } catch (error) { alert(`No se pudo guardar: ${error.message}`); }
+      });
+
+      function recolectarDatosPregunta() {
+          // Validación del tipo de pregunta
+          if (!tipoActual) {
+              mostrarMensaje('Selecciona un tipo de pregunta.', 'warning');
+              return null;
+          }
+
+          // Validación del puntaje
+          const puntos = document.getElementById('puntos').value;
+          if (!puntos || puntos < 1 || puntos > 100) {
+              mostrarMensaje('El puntaje debe estar entre 1 y 100.', 'warning');
+              return null;
+          }
+
+          const formData = new FormData();
+          formData.append('tipo_pregunta', tipoActual);
+          formData.append('enunciado', document.getElementById('enunciado').value.trim());
+          formData.append('puntos', puntos);
+
+          // Manejo de archivos
+          const archivoInput = document.getElementById('archivo');
+          if (archivoInput.files.length > 0) {
+              const archivo = archivoInput.files[0];
+              if (archivo.size > 5 * 1024 * 1024) { // 5MB
+                  mostrarMensaje('El archivo no debe superar los 5MB.', 'warning');
+                  return null;
+              }
+              formData.append('archivo', archivo);
+          }
+
+          if (modoEdicion) {
+              formData.append('id_pregunta', document.getElementById('id_pregunta_edit').value);
+              formData.append('tipo_tabla', document.getElementById('tipo_tabla_edit').value);
+          }
+          let pregunta = '', opciones = [], valido = true;
+          if (tipoActual === 'completar') {
+              pregunta = document.getElementById('pregunta-completar').value;
+              const espacios = (pregunta.match(/\[____\]/g) || []).length;
+              const correctasInputs = document.querySelectorAll('.opcion-correcta-completar');
+              if (correctasInputs.length !== espacios || espacios === 0) {
+                  alert(`El número de respuestas (${correctasInputs.length}) no coincide con los espacios (${espacios}).`);
+                  return null;
+              }
+              correctasInputs.forEach(i => { if (i.value.trim()) opciones.push({ texto: i.value.trim(), correcta: true }); });
+              document.querySelectorAll('.opcion-distractora-completar').forEach(i => { if (i.value.trim()) opciones.push({ texto: i.value.trim(), correcta: false }); });
+              if (opciones.filter(o => o.correcta).length !== espacios) { 
+                  alert('Debe haber una respuesta correcta por cada espacio [____].');
+                  valido = false; 
+              }
+          } else if (tipoActual === 'seleccion_multiple') {
+              pregunta = document.getElementById(`pregunta-seleccion_multiple`).value;
+              const sel = document.querySelector('input[name="correcta_seleccion"]:checked');
+              document.querySelectorAll('.opcion-texto-seleccion').forEach(i => {
+                  if (i.value.trim()) opciones.push({ texto: i.value.trim(), correcta: (sel && sel.value === i.id) });
+              });
+              if (!opciones.some(o => o.correcta)) { alert('Marca una opción correcta.'); valido = false; }
+          } else if (tipoActual === 'relacionar') {
+              pregunta = document.getElementById(`pregunta-relacionar`).value;
+              document.querySelectorAll('.relacionar-par').forEach(par => {
+                  const col_a = par.querySelector('.relacionar-col-a').value.trim();
+                  const col_b = par.querySelector('.relacionar-col-b').value.trim();
+                  if (col_a && col_b) { opciones.push({ col_a, col_b }); }
+              });
+              if (opciones.length < 1) { alert('Agrega al menos un par.'); valido = false; }
+          }
+          if (!pregunta.trim()) { alert('El texto de la pregunta es obligatorio.'); valido = false; }
+          if (!valido) return null;
+          formData.append('pregunta', pregunta.trim());
+          formData.append('opciones', JSON.stringify(opciones));
+          return formData;
+      }
+
+      function renderizarListaPreguntas() {
+          const container = document.getElementById('lista-preguntas');
+          container.innerHTML = '';
+          if (preguntas.length === 0) {
+              container.innerHTML = '<div class="mensaje-vacio"><p>Aún no hay preguntas.</p></div>';
+              return;
+          }
+          preguntas.forEach(p => {
+              const item = document.createElement('div');
+              item.className = 'pregunta-item';
+              item.innerHTML = `<div class="pregunta-item-info"><h5>${p.pregunta.substring(0,50)}...</h5><p>${p.tipo.replace('_',' ')} - ${p.puntos} pts</p></div><div><button onclick="cargarPreguntaParaEditar('${p.id}', '${p.tipo_tabla}')">✏️</button><button onclick="eliminarPregunta('${p.id}', '${p.tipo_tabla}')">🗑️</button></div>`;
+              container.appendChild(item);
+          });
+          actualizarUIporEstado();
+      }
+
+      async function eliminarPregunta(id, tipo_tabla) {
+          if (estadoExamen !== 'borrador' || !confirm('¿Eliminar esta pregunta? Esta acción no se puede deshacer.')) return;
+          try {
+              const response = await fetch(`/examen/${ID_INSTRUMENTO}/pregunta/eliminar`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id_pregunta: id, tipo_tabla: tipo_tabla })
+              });
+              if (!response.ok) { const error = await response.json(); throw new Error(error.error || 'Error'); }
+              preguntas = preguntas.filter(p => !(p.id == id && p.tipo_tabla === tipo_tabla));
+              renderizarListaPreguntas();
+          } catch (error) { alert(`No se pudo eliminar: ${error.message}`); }
+      }
+
+      function cargarPreguntaParaEditar(id, tipo_tabla) {
+          const pregunta = preguntas.find(p => p.id == id && p.tipo_tabla === tipo_tabla);
+          if (!pregunta) return;
+          limpiarEditor();
+          modoEdicion = true;
+          document.getElementById('editor-titulo').textContent = `Editando Pregunta`;
+          
+          tipoActual = pregunta.tipo;
+          document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('active'));
+          document.querySelector(`.tipo-card[data-tipo="${pregunta.tipo}"]`).classList.add('active');
+          document.getElementById('editor-formularios').style.display = 'block';
+          document.querySelectorAll('.form-container').forEach(f => { f.style.display = 'none'; f.classList.remove('active'); });
+          const form = document.getElementById(`form-${pregunta.tipo}`);
+          form.style.display = 'block';
+          form.classList.add('active');
+          
+          document.getElementById('id_pregunta_edit').value = pregunta.id;
+          document.getElementById('tipo_tabla_edit').value = pregunta.tipo_tabla;
+          document.getElementById('enunciado').value = pregunta.enunciado || '';
+          document.getElementById('puntos').value = pregunta.puntos;
+          document.getElementById(`pregunta-${pregunta.tipo}`).value = pregunta.pregunta;
+
+          const previewContainer = document.getElementById('imagen-previa-container');
+          if (pregunta.archivo) {
+              const imageUrl = `{{ url_for('static', filename='img/') }}${pregunta.archivo}`;
+              previewContainer.innerHTML = `
+                  <p>Imagen actual:</p>
+                  <img src="${imageUrl}" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                  <p><small>Subir un nuevo archivo reemplazará el actual.</small></p>
+              `;
+          }
+
+          if (pregunta.tipo === 'completar') {
+              // Llamamos a la función con el target correcto
+              actualizarOpcionesCompletar({ target: document.getElementById(`pregunta-completar`) });
+              const correctas = pregunta.opciones.filter(o => o.correcta);
+              const distractoras = pregunta.opciones.filter(o => !o.correcta);
+              // Llenamos los inputs que acabamos de crear
+              document.querySelectorAll('.opcion-correcta-completar').forEach((input, i) => {
+                  if (correctas[i]) input.value = correctas[i].texto;
+              });
+              distractoras.forEach(o => agregarOpcionCompletarDistractora(o.texto));
+          } else if (pregunta.tipo === 'seleccion_multiple') {
+              document.getElementById('opciones-seleccion_multiple').innerHTML = '';
+              pregunta.opciones.forEach(o => agregarOpcionSeleccion(o.texto, o.correcta));
+          } else if (pregunta.tipo === 'relacionar') {
+              document.getElementById('pares-relacionar').innerHTML = '';
+              pregunta.opciones.forEach(par => agregarParRelacionar(par));
+          }
+          document.getElementById('editor-vacio').style.display = 'none';
+          document.getElementById('editor-activo').style.display = 'block';
+      }
+
+      // --- INICIO DE CAMBIO (Request 2: Chulito) ---
+      function agregarOpcionSeleccion(texto = '', correcta = false) {
+          const id = `opcion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const checkedAttr = correcta ? 'checked' : '';
+          
+          // Se cambió la estructura para usar el <label> y <span> para el chulito
+          const opcionHtml = `
+            <div class="opcion-item">
+              <label class="radio-chulito-label">
+                <input type="radio" name="correcta_seleccion" value="${id}" ${checkedAttr}>
+                <span class="radio-chulito-span"></span>
+              </label>
+              <input type="text" class="opcion-texto-seleccion" id="${id}" value="${texto}" placeholder="Texto de la opción">
+              <button type="button" class="btn-danger" onclick="this.parentElement.remove()">✕</button>
+            </div>`;
+          document.getElementById('opciones-seleccion_multiple').insertAdjacentHTML('beforeend', opcionHtml);
+      }
+      // --- FIN DE CAMBIO (Request 2: Chulito) ---
+
+      function agregarParRelacionar(par = { col_a: '', col_b: '' }) {
+          document.getElementById('pares-relacionar').insertAdjacentHTML('beforeend', `<div class="relacionar-par"><input type="text" value="${par.col_a}" class="relacionar-col-a" placeholder="Elemento A"><input type="text" value="${par.col_b}" class="relacionar-col-b" placeholder="Elemento B"><button type="button" class="btn-danger" onclick="this.parentElement.remove()">✕</button></div>`);
+      }
+
+      function agregarOpcionCompletarDistractora(valor = '') {
+          document.getElementById('opciones-completar-distractoras').insertAdjacentHTML('beforeend', `<div class="opcion-item"><input type="text" value="${valor}" class="opcion-distractora-completar" placeholder="Opción distractora"><button type="button" class="btn-danger" onclick="this.parentElement.remove()">✕</button></div>`);
+      }
+
+      document.getElementById('pregunta-completar').addEventListener('input', actualizarOpcionesCompletar);
+
+      // --- INICIO DE CAMBIO (Request 3: Bug Completar) ---
+      // Función reescrita para no destruir los inputs en cada tecleo
+      function actualizarOpcionesCompletar(e) {
+          const espacios = (e.target.value.match(/\[____\]/g) || []).length;
+          const cont = document.getElementById('opciones-completar-correctas');
+          const inputsActuales = cont.querySelectorAll('.opcion-item');
+
+          if (espacios > inputsActuales.length) {
+              // Agregar los inputs que faltan
+              for (let i = inputsActuales.length; i < espacios; i++) {
+                  cont.insertAdjacentHTML('beforeend',
+                      `<div class="opcion-item">
+                         <input type="text" class="opcion-correcta-completar" placeholder="Respuesta para el espacio ${i + 1}">
+                       </div>`
+                  );
+              }
+          } else if (espacios < inputsActuales.length) {
+              // Quitar los inputs que sobran (desde el final)
+              for (let i = inputsActuales.length - 1; i >= espacios; i--) {
+                  inputsActuales[i].remove();
+              }
+          }
+          
+          // Actualizar todos los placeholders para que los números sean correctos
+          cont.querySelectorAll('.opcion-item input').forEach((input, i) => {
+              input.placeholder = `Respuesta para el espacio ${i + 1}`;
+          });
+      }
+      // --- FIN DE CAMBIO (Request 3: Bug Completar) ---
+
+
+      document.getElementById('btn-publicar').addEventListener('click', async () => {
+          if (preguntas.length === 0) { alert('El examen debe tener al menos una pregunta.'); return; }
+          if (confirm('¿Publicar este examen? No podrás modificarlo después.')) {
+              try {
+                  const response = await fetch(`/examen/${ID_INSTRUMENTO}/publicar`, { method: 'POST' });
+                  const result = await response.json();
+                  if (!response.ok) throw new Error(result.error || 'Error');
+                  estadoExamen = 'publico';
+                  actualizarUIporEstado();
+                  alert(result.message || 'Examen publicado.');
+              } catch (error) { alert(`No se pudo publicar: ${error.message}`); }
+          }
+      });
+
+      function actualizarUIporEstado() {
+          const esBorrador = estadoExamen === 'borrador';
+          const esPublico = estadoExamen === 'publico';
+          document.getElementById('btn-nueva-pregunta').style.display = esBorrador ? 'inline-block' : 'none';
+          document.getElementById('btn-publicar').style.display = esBorrador ? 'inline-block' : 'none';
+          
+          // --- INICIO DE CORRECCIÓN (Req 1) ---
+          // Ahora el botón Asignar solo aparece si es público Y NO es Fase 2
+          document.getElementById('btn-asignar').style.display = (esPublico && FASE_EXAMEN !== 2) ? 'inline-block' : 'none';
+          // --- FIN DE CORRECCIÓN ---
+
+          document.querySelectorAll('.lista-preguntas button').forEach(btn => btn.disabled = !esBorrador);
+
+          if (!esBorrador) {
+              document.getElementById('editor-activo').style.display = 'none';
+              document.getElementById('editor-vacio').innerHTML = '<p>El examen está publicado y no se puede editar.</p>';
+              document.getElementById('editor-vacio').style.display = 'block';
+          }
+      }
+
+      // --- LÓGICA PARA MODAL DE ASIGNACIÓN (MODIFICADO Request 1) ---
+      const modalAsignar = document.getElementById('modal-asignar-fichas');
+      const btnAbrirAsignar = document.getElementById('btn-asignar');
+      const btnCerrarAsignar = document.querySelector('.modal-cerrar-asignar');
+      const btnCancelarAsignar = document.getElementById('btn-cancelar-asignacion');
+      const btnConfirmarAsignar = document.getElementById('btn-confirmar-asignacion');
+
+      // --- INICIO DE CAMBIO (Corrección Lógica de Fechas Local) ---
+      function getMinFinTime(inicioStr) {
+          // Crea una fecha desde el string 'YYYY-MM-DDTHH:MM'
+          if (!inicioStr) {
+              // Fallback por si acaso, aunque inicioStr siempre debería estar definido
+              const now = new Date();
+              now.setMinutes(now.getMinutes() + 1);
+              inicioStr = now.toISOString().slice(0, 16); 
+          }
+          const fechaInicioDate = new Date(inicioStr);
+          // Añade un minuto
+          fechaInicioDate.setMinutes(fechaInicioDate.getMinutes() + 1);
+          
+          // Convertir la fecha local a string YYYY-MM-DDTHH:MM
+          // Esto es CRUCIAL para que el input datetime-local 'min' funcione
+          const year = fechaInicioDate.getFullYear();
+          const month = (fechaInicioDate.getMonth() + 1).toString().padStart(2, '0');
+          const day = fechaInicioDate.getDate().toString().padStart(2, '0');
+          const hours = fechaInicioDate.getHours().toString().padStart(2, '0');
+          const minutes = fechaInicioDate.getMinutes().toString().padStart(2, '0');
+          
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+      // --- FIN DE CAMBIO ---
+
+      btnAbrirAsignar.addEventListener('click', async () => {
+          const listaFichasDiv = document.getElementById('lista-fichas-asignar');
+          listaFichasDiv.innerHTML = '<div class="loader"></div>';
+          document.getElementById('filtro-fichas').value = ''; // Limpiar filtro al abrir
+          modalAsignar.style.display = 'block';
+
+          // Configurar fechas predeterminadas
+          const now = new Date();
+          // Redondear al siguiente minuto
+          now.setSeconds(0);
+          now.setMilliseconds(0);
+          
+          // --- INICIO DE CAMBIO (Corrección Lógica de Fechas Local) ---
+          // String para el input (formato YYYY-MM-DDTHH:MM local)
+          // Se crea manualmente para evitar problemas de zona horaria con toISOString
+          const year = now.getFullYear();
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          const day = now.getDate().toString().padStart(2, '0');
+          const hours = now.getHours().toString().padStart(2, '0');
+          const minutes = now.getMinutes().toString().padStart(2, '0');
+          const nowStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+          // --- FIN DE CAMBIO ---
+
+          const fechaInicioInput = document.getElementById('fecha-inicio');
+          const fechaFinInput = document.getElementById('fecha-fin');
+
+          fechaInicioInput.value = nowStr;
+          fechaInicioInput.min = nowStr;
+
+          // --- INICIO DE CAMBIO (Corrección Lógica de Fechas Local) ---
+          // Establecer el mínimo inicial para fecha_fin
+          const minFinInicial = getMinFinTime(nowStr);
+          fechaFinInput.min = minFinInicial;
+          fechaFinInput.value = minFinInicial; // Sugerir un minuto después
+
+          // --- CAMBIO: Usar 'input' en lugar de 'change' ---
+          // Esto podría hacer que el 'min' del campo de fin se actualice
+          // más rápido, lo que *podría* (dependiendo del navegador)
+          // refrescar el picker si todavía está abierto.
+          fechaInicioInput.addEventListener('input', function() {
+              // Validar que la fecha de inicio no sea anterior al mínimo (ahora)
+              if (this.value < this.min) {
+                  this.value = this.min;
+              }
+
+              const nuevoMinFin = getMinFinTime(this.value);
+              fechaFinInput.min = nuevoMinFin;
+              
+              // Si la fecha de fin actual es inválida, auto-corregirla al nuevo mínimo
+              if (fechaFinInput.value && fechaFinInput.value <= this.value) {
+                  fechaFinInput.value = nuevoMinFin;
+              }
+          });
+          // --- FIN DE CAMBIO ---
+
+          // --- CAMBIO: Se elimina el 'change' listener de fechaFinInput ---
+          // Se quitó el que mostraba el mensaje "horrible".
+          // El 'min' attribute nativo se encargará de la validación visual.
+
+          try {
+              const response = await fetch(`/examen/${ID_INSTRUMENTO}/fichas_disponibles`);
+              if (!response.ok) throw new Error('No se pudieron cargar las fichas.');
+              const fichas = await response.json();
+
+              if (fichas.length === 0) {
+                  listaFichasDiv.innerHTML = '<p class="mensaje-vacio">No hay fichas activas para asignar.</p>';
+                  return;
+              }
+
+              fichas.sort((a, b) => a.ya_asignado - b.ya_asignado);
+
+              let fichasHtml = '';
+              fichas.forEach(ficha => {
+                  const isDisabled = ficha.ya_asignado;
+                  const cardClass = isDisabled ? 'ficha-card-asignar disabled' : 'ficha-card-asignar';
+                  // --- CAMBIO: Por defecto no seleccionada ---
+                  const checkboxState = isDisabled ? 'disabled' : ''; // <-- ANTES ERA 'checked'
+                  const infoHtml = isDisabled
+                    ? `<p class="asignado-info">Ya asignado a esta ficha</p>`
+                    : `<p><strong>Aprendices Activos:</strong> ${ficha.aprendices_activos}</p>`;
+
+                  fichasHtml += `
+                      <div class="${cardClass}">
+                          <div class="ficha-card-checkbox">
+                              <input type="checkbox" id="ficha-${ficha.id_ficha}" value="${ficha.id_ficha}" ${checkboxState}>
+                          </div>
+                          <div class="ficha-card-info">
+                              <div class="ficha-card-header">
+                                  <h4>Ficha ${ficha.id_ficha}</h4>
+                                  <span class="estado-badge estado-${ficha.estado}">${ficha.estado}</span>
+                              </div>
+                              <div class="ficha-card-body">
+                                  <p><strong>Nombre:</strong> ${ficha.nombre}</p>
+                                  ${infoHtml}
+                              </div>
+                          </div>
+                      </div>
+                  `;
+              });
+              listaFichasDiv.innerHTML = fichasHtml;
+          } catch (error) {
+              listaFichasDiv.innerHTML = `<p class="mensaje-vacio" style="color:var(--color-peligro);">${error.message}</p>`;
+          }
+      });
+
+      // --- CAMBIO: Limpiar filtro al cerrar ---
+      const cerrarModalAsignar = () => {
+          modalAsignar.style.display = 'none';
+          document.getElementById('filtro-fichas').value = ''; // Limpiar filtro
+          // Asegurarse de que todas las fichas se muestren la próxima vez
+          document.querySelectorAll('#lista-fichas-asignar .ficha-card-asignar').forEach(ficha => {
+              ficha.style.display = 'flex';
+          });
+      };
+      btnCerrarAsignar.addEventListener('click', cerrarModalAsignar);
+      btnCancelarAsignar.addEventListener('click', cerrarModalAsignar);
+
+      btnConfirmarAsignar.addEventListener('click', async () => {
+          const seleccionadas = document.querySelectorAll('#lista-fichas-asignar input[type="checkbox"]:checked');
+          const fichas_ids = Array.from(seleccionadas).map(cb => cb.value);
+          const fecha_inicio = document.getElementById('fecha-inicio').value;
+          const fecha_fin = document.getElementById('fecha-fin').value;
+
+          if (fichas_ids.length === 0) {
+              alert('Debes seleccionar al menos una ficha.');
+              return;
+          }
+          if (!fecha_inicio || !fecha_fin) {
+              alert('Debes especificar la fecha de inicio y fin.');
+              return;
+          }
+
+          // --- INICIO DE CAMBIO (Validación final) ---
+          // Esta validación final se mantiene como un último chequeo
+          // por si el navegador no impidió una entrada manual incorrecta.
+          if (new Date(fecha_fin) <= new Date(fecha_inicio)) {
+              alert('La fecha de fin debe ser estrictamente posterior a la fecha de inicio. Por favor, revisa las fechas.');
+              return;
+          }
+          // --- FIN DE CAMBIO ---
+
+          btnConfirmarAsignar.disabled = true;
+          btnConfirmarAsignar.textContent = 'Asignando...';
+
+          try {
+              const response = await fetch(`/examen/${ID_INSTRUMENTO}/asignar`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ fichas_ids, fecha_inicio, fecha_fin })
+              });
+
+              const result = await response.json();
+
+              if (!response.ok) {
+                  throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+              }
+
+              alert(result.message || 'Asignación completada exitosamente.');
+              cerrarModalAsignar();
+
+          } catch (error) {
+              console.error('Error al asignar:', error);
+              alert(`Error al asignar: ${error.message}`);
+          } finally {
+              btnConfirmarAsignar.disabled = false;
+              btnConfirmarAsignar.textContent = 'Asignar';
+          }
+      });
+    </script>
+    <!-- El JS externo se mantiene por si tiene otra lógica -->
+    <script
+      src="{{ url_for('static', filename='js/instructor/gestionar_examen.js') }}"
+    ></script>
+  </body>
+</html>

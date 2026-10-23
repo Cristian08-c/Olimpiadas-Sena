@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Aprendices de Ficha {{ ficha.id_ficha }} - Gestión de Aprendices
+    </title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/admin/style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-top">
+          <div class="logo-section">
+            <img
+              src="{{ url_for('static', filename='img/green-sena-logo.webp') }}"
+              alt="Logo SENA"
+              class="logo-sena"
+            />
+            <div class="sena-info">
+              <h1>Centro Industrial<br />y del Desarrollo Tecnológico</h1>
+              <p class="subtitle">Regional Santander</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <span style="color: #333; margin-right: 15px"
+              >{{ usuario.nombre_completo }}</span
+            >
+            <a href="{{ url_for('logout') }}" class="btn-cerrar"
+              >Cerrar Sesión</a
+            >
+          </div>
+        </div>
+        <div class="header-nav">
+          <nav>
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+              >Subir Archivo</a
+            >
+            <a href="{{ url_for('admin_fichas') }}" class="nav-link"
+              >Ver Fichas</a
+            >
+            <a href="{{ url_for('admin_instructores') }}" class="nav-link"
+              >Registrar Instructor</a
+            >
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <div class="aprendices-section">
+          <div class="section-header">
+            <div class="breadcrumb">
+              <a href="{{ url_for('admin_fichas') }}">Fichas</a>
+              <span>/</span>
+              <span>Ficha {{ ficha.id_ficha }}</span>
+            </div>
+            <h2>{{ ficha.nombre }}</h2>
+            <div class="ficha-details">
+              <span class="detail-item"
+                >Total: {{ aprendices|length }} aprendices</span
+              >
+            </div>
+          </div>
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %}
+          <div class="messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %} {% endwith %} {% if aprendices %}
+          <div class="aprendices-container">
+            <div class="search-filter">
+              <input
+                type="text"
+                id="search-aprendices"
+                placeholder="Buscar por nombre o identificación..."
+                class="search-input"
+              />
+            </div>
+
+            <div class="aprendices-grid" id="aprendices-grid">
+              {% for aprendiz in aprendices %}
+              <!-- Aplicar clase de estilo si el aprendiz está deshabilitado -->
+              <div
+                class="aprendiz-card {{ 'aprendiz-disabled' if not aprendiz.activo }}"
+                data-documento="{{ aprendiz.identificacion }}"
+                data-nombre="{{ aprendiz.nombre }} {{ aprendiz.apellido }}"
+              >
+                <div class="aprendiz-header">
+                  <div class="aprendiz-info">
+                    <h3>{{ aprendiz.nombre }} {{ aprendiz.apellido }}</h3>
+                    <span class="numero-lista"
+                      ># {{ aprendiz.numero_lista }}</span
+                    >
+                    <!-- Mostrar un badge si está deshabilitado -->
+                    {% if not aprendiz.activo %}
+                    <span class="aprendiz-status-control disabled"
+                      >DESHABILITADO</span
+                    >
+                    {% endif %}
+                  </div>
+                  <span
+                    class="aprendiz-status {{ 'cancelled' if aprendiz.estado in ['CANCELADO', 'RETIRO VOLUNTARIO'] else 'active' }}"
+                    >{{ aprendiz.estado }}</span
+                  >
+                </div>
+                <div class="aprendiz-content">
+                  <p>
+                    <strong>Documento:</strong> {{ aprendiz.identificacion }}
+                  </p>
+                  <!-- CORRECCIÓN: Usar el id_ficha del contexto de la ficha para mayor seguridad -->
+                  <p><strong>ID Ficha:</strong> {{ ficha.id_ficha }}</p>
+                  <p><strong>Celular:</strong> {{ aprendiz.celular }}</p>
+                  <p><strong>Correo:</strong> {{ aprendiz.correo }}</p>
+                  <p><strong>Rol:</strong> {{ aprendiz.rol }}</p>
+                </div>
+                <div class="aprendiz-actions">
+                  <!-- CORRECCIÓN: La lógica ahora se basa en el valor booleano de `aprendiz.activo` -->
+                  {% if aprendiz.activo %}
+                  <!-- Si está activo (True), mostrar botón para deshabilitar -->
+                  <a
+                    href="{{ url_for('toggle_aprendiz', ficha_id=ficha.id_ficha, aprendiz_id=aprendiz.identificacion) }}"
+                    class="btn-toggle-small btn-disable-small"
+                    onclick="return confirm('¿Estás seguro de deshabilitar a {{ aprendiz.nombre }} {{ aprendiz.apellido }}?')"
+                    >Deshabilitar</a
+                  >
+                  {% else %}
+                  <!-- Si no está activo (False), mostrar botón para habilitar -->
+                  <a
+                    href="{{ url_for('toggle_aprendiz', ficha_id=ficha.id_ficha, aprendiz_id=aprendiz.identificacion) }}"
+                    class="btn-toggle-small btn-enable-small"
+                    onclick="return confirm('¿Estás seguro de habilitar a {{ aprendiz.nombre }} {{ aprendiz.apellido }}?')"
+                    >Habilitar</a
+                  >
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <div class="no-data">
+            <svg
+              width="64"
+              height="64"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                cx="12"
+                cy="7"
+                r="4"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <h3>No hay aprendices disponibles</h3>
+            <p>No se encontraron registros de aprendices para esta ficha.</p>
+          </div>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/admin/aprendices.js') }}"></script>
+  </body>
+</html>

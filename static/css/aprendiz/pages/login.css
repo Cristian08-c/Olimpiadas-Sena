@@ -1,0 +1,493 @@
+/*
+PÁGINA: Login - Estilos específicos
+DESCRIPCIÓN: Layout y componentes únicos de la página de inicio de sesión.
+FUSIONADO DESDE: css/styles.css - estilos monolíticos migrados y optimizados
+*/
+
+/* Contenedor principal del login - fusionado desde css/styles.css */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =======================================================
+   ANIMACIONES DEFINIDAS LOCALMENTE
+======================================================= */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animación específica para el botón con efecto más llamativo */
+@keyframes buttonSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-2px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Configuración consistente de animaciones para móvil y escritorio */
+.container * {
+  animation-play-state: running !important;
+  animation-fill-mode: both !important;
+}
+
+/* Forzar animaciones en todos los dispositivos */
+.brand-header,
+.brand-logo,
+.logo-image,
+.brand-name,
+.content,
+.title,
+.description,
+.form-container,
+.form-header,
+.form-title,
+.form-subtitle,
+.form-group,
+.form-label,
+.login-form .submit-button {
+  will-change: opacity, transform;
+  animation-play-state: running !important;
+  animation-fill-mode: both !important;
+}
+
+/* Configuración específica para móviles */
+@media (max-width: 768px) {
+  .brand-header,
+  .brand-logo,
+  .logo-image,
+  .brand-name,
+  .content,
+  .title,
+  .description,
+  .form-container,
+  .form-header,
+  .form-title,
+  .form-subtitle,
+  .form-group,
+  .form-label,
+  .login-form .submit-button {
+    animation-duration: 0.6s !important;
+    animation-timing-function: ease-out !important;
+  }
+}
+
+/* Configuración específica para escritorio */
+@media (min-width: 769px) {
+  .brand-header,
+  .brand-logo,
+  .logo-image,
+  .brand-name,
+  .content,
+  .title,
+  .description,
+  .form-container,
+  .form-header,
+  .form-title,
+  .form-subtitle,
+  .form-group,
+  .form-label,
+  .login-form .submit-button {
+    animation-duration: 0.6s !important;
+    animation-timing-function: ease-out !important;
+    animation-play-state: running !important;
+    animation-fill-mode: both !important;
+  }
+}
+
+/* Forzar animaciones en todos los navegadores de escritorio */
+@media (hover: hover) and (pointer: fine) {
+  .container * {
+    animation-play-state: running !important;
+  }
+}
+
+/* =======================================================
+   COLUMNA IZQUIERDA - BRANDING Y PARTÍCULAS
+======================================================= */
+.left-column {
+  flex: 1;
+  background: linear-gradient(
+    135deg,
+    var(--color-brand) 0%,
+    var(--color-brand-dark) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: var(--gutter);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Canvas para el sistema de partículas - solo en columna izquierda */
+#particles-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Contenedor de partículas (legacy - mantenido para compatibilidad) */
+.particles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Estilos para partículas individuales (legacy) */
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatUp linear infinite;
+}
+
+/* Header de marca */
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 2;
+  animation: slideUpFadeIn 0.6s ease-out 0.02s both;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: slideUpFadeIn 0.6s ease-out 0.05s both;
+}
+
+.logo-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  animation: slideUpFadeIn 0.6s ease-out 0.1s both;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-white);
+  letter-spacing: -0.025em;
+  animation: slideUpFadeIn 0.6s ease-out 0.12s both;
+}
+
+/* Contenido principal de la columna izquierda */
+.content {
+  max-width: var(--container-width);
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  margin-bottom: auto;
+  animation: slideUpFadeIn 0.6s ease-out 0.18s both;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  animation: slideUpFadeIn 0.6s ease-out 0.2s both;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.description {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.7;
+  animation: slideUpFadeIn 0.6s ease-out 0.3s both;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* =======================================================
+   COLUMNA DERECHA - FORMULARIO
+======================================================= */
+.right-column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+  background-color: var(--color-white);
+}
+
+.form-container {
+  width: 100%;
+  max-width: 420px;
+  animation: slideUpFadeIn 0.6s ease-out 0.45s both;
+}
+
+.form-header {
+  margin-bottom: 2rem;
+  animation: slideUpFadeIn 0.6s ease-out 0.48s both;
+}
+
+.form-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+  animation: slideUpFadeIn 0.6s ease-out 0.5s both;
+}
+
+.form-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  animation: slideUpFadeIn 0.6s ease-out 0.55s both;
+}
+
+/* Formulario de login */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group:nth-child(1) {
+  animation: slideUpFadeIn 0.6s ease-out 0.6s both;
+}
+
+.form-group:nth-child(2) {
+  animation: slideUpFadeIn 0.6s ease-out 0.65s both;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  animation: slideUpFadeIn 0.6s ease-out 0.62s both;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  outline: none;
+  transition: var(--transition-fast);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+  animation: slideUpFadeIn 0.5s ease-out 0.64s both;
+}
+
+.form-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--focus-ring-brand);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* Botón de envío - Específico para login */
+.login-form .submit-button {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-white);
+  background-color: var(--color-brand);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  /* Animación de entrada suave */
+  animation: slideUpFadeIn 0.6s ease-out 0.7s both;
+  /* Transiciones para hover */
+  transition: background-color var(--transition-fast),
+    box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.login-form .submit-button:hover {
+  background-color: var(--color-brand-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-brand);
+}
+
+.login-form .submit-button:active {
+  transform: translateY(0);
+}
+
+.login-form .submit-button:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =======================================================
+   ANIMACIONES
+======================================================= */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(calc(100vh + 20px)) translateX(0) scale(0.3)
+      rotate(0deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(75vh) translateX(calc(var(--random-x, 0) * 0.3))
+      scale(0.8) rotate(90deg);
+  }
+  50% {
+    transform: translateY(50vh) translateX(calc(var(--random-x, 0) * 0.6))
+      scale(1) rotate(180deg);
+  }
+  75% {
+    transform: translateY(25vh) translateX(calc(var(--random-x, 0) * 0.8))
+      scale(1.1) rotate(270deg);
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20vh) translateX(var(--random-x, 0)) scale(0.5)
+      rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* =======================================================
+   RESPONSIVE DESIGN
+======================================================= */
+
+/* Tablet y pantallas medianas */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .left-column {
+    min-height: 40vh;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .brand-header {
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .brand-name {
+    font-size: 1.25rem;
+  }
+
+  .logo-image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .description {
+    font-size: 1rem;
+  }
+
+  .right-column {
+    padding: 2rem;
+  }
+
+  .form-title {
+    font-size: 1.75rem;
+  }
+
+  .content {
+    transform: none;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .left-column {
+    padding: 1.5rem;
+  }
+
+  .right-column {
+    padding: 1.5rem;
+  }
+
+  .form-input {
+    font-size: 16px; /* Previene zoom en iOS */
+    padding: 0.875rem 1rem;
+  }
+
+  .form-group {
+    gap: 0.75rem;
+  }
+
+  .login-form {
+    gap: 1.25rem;
+  }
+}
+
+/* =======================================================
+   PREFERENCIAS DE MOVIMIENTO REDUCIDO
+======================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .form-container,
+  .form-title,
+  .form-subtitle,
+  .form-group,
+  .submit-button,
+  .form-label,
+  .form-input,
+  .brand-header,
+  .content {
+    animation: none;
+  }
+
+  .left-column {
+    background: var(--color-brand);
+  }
+}

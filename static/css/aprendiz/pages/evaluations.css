@@ -1,0 +1,312 @@
+/*
+PÁGINA: Evaluations - Estilos específicos  
+DESCRIPCIÓN: Layout y componentes únicos de la página de evaluaciones.
+FUSIONADO DESDE: css/evaluaciones.css - estilos migrados y optimizados con variables
+*/
+
+/* Canvas para partículas de fondo - fusionado desde css/evaluaciones.css */
+#particles-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Botón de cambio de tema */
+.theme-toggle {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  background: var(--color-white);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  color: var(--color-text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Tema oscuro para el botón */
+body[data-theme="dark"] .theme-toggle {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+  border-color: #374151;
+}
+
+body[data-theme="dark"] .theme-toggle:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px var(--shadow-brand);
+}
+
+/* Container principal */
+.container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header de la página */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: slideUpFadeIn 0.6s ease-out 0.1s both;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.025em;
+  animation: slideUpFadeIn 0.6s ease-out 0.15s both;
+  transition: color 0.3s ease;
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+  animation: slideUpFadeIn 0.6s ease-out 0.2s both;
+  transition: color 0.3s ease;
+}
+
+/* Grid de tarjetas */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+/* Estilos de tarjetas */
+.card {
+  background: var(--color-white);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease,
+    border-color 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid var(--color-border);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px var(--shadow-brand);
+  border-color: var(--color-brand);
+}
+
+.card:hover::before {
+  transform: scaleX(1);
+}
+
+.card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: rgba(57, 169, 0, 0.05);
+  position: relative;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .card-image img {
+  transform: scale(1.08);
+}
+
+.card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(57, 169, 0, 0.1);
+  border-radius: 0.75rem;
+  color: var(--color-brand);
+  transition: all 0.3s ease;
+}
+
+.card:hover .card-icon {
+  background: var(--color-brand);
+  color: var(--color-white);
+  transform: translateY(-2px);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-top: 0.25rem;
+}
+
+.card-description {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+/* Animaciones de entrada escalonadas */
+.card:nth-child(1) {
+  animation: slideUpFadeIn 0.6s ease-out 0.3s both;
+}
+
+.card:nth-child(2) {
+  animation: slideUpFadeIn 0.6s ease-out 0.4s both;
+}
+
+.card:nth-child(3) {
+  animation: slideUpFadeIn 0.6s ease-out 0.5s both;
+}
+
+/* Tema oscuro para las tarjetas */
+body[data-theme="dark"] .card {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="dark"] .card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(30, 111, 0, 0.2);
+}
+
+/* =======================================================
+   RESPONSIVE DESIGN
+======================================================= */
+
+/* Tablet y pantallas medianas */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .card-image {
+    height: 180px;
+  }
+
+  .card-content {
+    padding: 1.25rem;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .theme-toggle {
+    top: 1rem;
+    right: 1rem;
+    width: 56px;
+    height: 56px;
+  }
+
+  .theme-toggle svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .title {
+    font-size: 1.875rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .card-grid {
+    gap: 1rem;
+  }
+
+  .card-image {
+    height: 160px;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+  }
+
+  .card-description {
+    font-size: 0.9rem;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+}
+
+/* =======================================================
+   PREFERENCIAS DE MOVIMIENTO REDUCIDO
+======================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .title,
+  .subtitle,
+  .card {
+    animation: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .card:hover .card-image img {
+    transform: none;
+  }
+}

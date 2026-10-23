@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fichas Disponibles - Gestión de Aprendices</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/admin/style.css') }}"
+    />
+    <style>
+      .btn-enable,
+      .btn-toggle.btn-enable {
+        background: linear-gradient(
+          135deg,
+          #28a745 0%,
+          #20c997 100%
+        ) !important;
+        color: white !important;
+        border: 2px solid #28a745 !important;
+      }
+
+      /* Selectores específicos para botones Habilitar en fichas */
+      .ficha-actions .btn-toggle.btn-enable,
+      .ficha-actions a[href*="toggle_ficha"]:contains("Habilitar"),
+      .btn-secondary:contains("Habilitar") {
+        background: #28a745 !important;
+        background-image: linear-gradient(
+          135deg,
+          #28a745 0%,
+          #20c997 100%
+        ) !important;
+        color: white !important;
+        border: 2px solid #28a745 !important;
+        font-weight: bold !important;
+      }
+
+      /* CORRECCIÓN: Asegurar que el botón Habilitar sea siempre clickeable */
+      .ficha-disabled .btn-toggle.btn-enable {
+          pointer-events: auto !important;
+          cursor: pointer !important;
+      }
+    </style>
+
+    <script>
+      // JavaScript para forzar el color verde en botones Habilitar de fichas
+      document.addEventListener("DOMContentLoaded", function () {
+        function forceGreenButtonsFichas() {
+          // Selecciona todos los botones y links
+          const allButtons = document.querySelectorAll("a, button");
+          allButtons.forEach((button) => {
+            if (
+              button.textContent.trim() === "Habilitar" ||
+              button.textContent.trim().includes("Habilitar")
+            ) {
+              button.style.setProperty(
+                "background-color",
+                "#28a745",
+                "important"
+              );
+              button.style.setProperty(
+                "background-image",
+                "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
+                "important"
+              );
+              button.style.setProperty("color", "white", "important");
+              button.style.setProperty(
+                "border",
+                "2px solid #28a745",
+                "important"
+              );
+              button.style.setProperty("font-weight", "bold", "important");
+            }
+          });
+        }
+
+        // Ejecuta al cargar la página
+        forceGreenButtonsFichas();
+
+        // Ejecuta después de un tiempo para asegurar que se aplique
+        setTimeout(forceGreenButtonsFichas, 100);
+        setTimeout(forceGreenButtonsFichas, 500);
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-top">
+          <div class="logo-section">
+            <img
+              src="{{ url_for('static', filename='img/green-sena-logo.webp') }}"
+              alt="Logo SENA"
+              class="logo-sena"
+            />
+            <div class="sena-info">
+              <h1>Centro Industrial<br />y del Desarrollo Tecnológico</h1>
+              <p class="subtitle">Regional Santander</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <span style="color: #333; margin-right: 15px"
+              >{{ usuario.nombre_completo }}</span
+            >
+            <a href="{{ url_for('logout') }}" class="btn-cerrar"
+              >Cerrar Sesión</a
+            >
+          </div>
+        </div>
+        <div class="header-nav">
+          <nav>
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+              >Subir Archivo</a
+            >
+            <a href="{{ url_for('admin_fichas') }}" class="nav-link active"
+              >Ver Fichas</a
+            >
+            <a href="{{ url_for('admin_instructores') }}" class="nav-link"
+              >Registrar Instructor</a
+            >
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <div class="fichas-section">
+          <div class="section-header">
+            <h2>Fichas Disponibles</h2>
+            <div class="stats">
+              <span class="stat-item">Total: {{ fichas|length }} fichas</span>
+              <a
+                href="{{ url_for('init_db') }}"
+                class="btn-secondary"
+                onclick="return confirm('¿Actualizar estructura de base de datos?')"
+              >
+                Actualizar BD
+              </a>
+            </div>
+          </div>
+
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %}
+          <div class="messages">
+            {% for category, message in messages %}
+            <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %} {% endwith %} {% if fichas %}
+          <div class="fichas-container">
+            <div class="search-filter">
+              <!-- CORRECCIÓN: Comentario movido fuera de la etiqueta input -->
+              <input
+                type="text"
+                id="search-fichas"
+                placeholder="Buscar por número o nombre de ficha..."
+                class="search-input"
+              />
+            </div>
+
+            <div class="fichas-grid" id="fichas-grid">
+              <!-- CORRECCIÓN: Se itera sobre 'fichas' como una lista -->
+              {% for ficha in fichas %}
+              <!-- CORRECCIÓN: Comentario movido fuera de la etiqueta div -->
+              <div
+                class="ficha-card {{ 'ficha-disabled' if not ficha.activo }}"
+                data-ficha-num="{{ ficha.id_ficha }}"
+                data-ficha-nombre="{{ ficha.nombre }}"
+              >
+                <div class="ficha-header">
+                  <!-- CORRECCIÓN: Se usa ficha.id_ficha -->
+                  <h3>Ficha {{ ficha.id_ficha }}</h3>
+                  <span
+                    class="ficha-status {{ 'active' if ficha.activo else 'inactive' }}"
+                  >
+                    {{ ficha.estado if ficha.estado else ('Activa' if
+                    ficha.activo else 'Inactiva') }}
+                  </span>
+                </div>
+                <div class="ficha-content">
+                  <div class="ficha-info">
+                    <p><strong>Nombre:</strong> {{ ficha.nombre }}</p>
+                    <p>
+                      <strong>Aprendices:</strong> {{ ficha.total_personas }}
+                    </p>
+                  </div>
+                  <div class="ficha-actions">
+                    {% if ficha.activo %}
+                    <a
+                      href="{{ url_for('ver_ficha', ficha_num=ficha.id_ficha) }}"
+                      class="btn-view"
+                      >Ver Aprendices</a
+                    >
+                    {% else %}
+                    <span
+                      class="btn-view"
+                      style="background: #6c757d; cursor: not-allowed"
+                      title="Ficha deshabilitada"
+                      >Ver Aprendices</span
+                    >
+                    {% endif %} {% if ficha.activo %}
+                    <a
+                      href="{{ url_for('toggle_ficha', ficha_id=ficha.id_ficha) }}"
+                      class="btn-toggle btn-disable"
+                      onclick="return confirm('¿Estás seguro de deshabilitar esta ficha?')"
+                      >Deshabilitar</a
+                    >
+                    {% else %}
+                    <a
+                      href="{{ url_for('toggle_ficha', ficha_id=ficha.id_ficha) }}"
+                      class="btn-toggle btn-enable"
+                      onclick="return confirm('¿Estás seguro de habilitar esta ficha?')"
+                      >Habilitar</a
+                    >
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <div class="no-data">
+            <svg
+              width="64"
+              height="64"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="14,2 14,8 20,8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <h3>No hay fichas disponibles</h3>
+            <p>Sube un archivo Excel para comenzar</p>
+          </div>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/admin/fichas.js') }}"></script>
+  </body>
+</html>
+

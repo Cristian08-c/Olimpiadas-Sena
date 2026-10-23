@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SENA Evaluaciones</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/aprendiz/base.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/aprendiz/components/buttons.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/aprendiz/components/cards.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/aprendiz/pages/evaluations.css') }}"
+    />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='img/green-sena-logo.webp') }}"
+      type="image/x-icon"
+    />
+    <style>
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none; /* Oculto por defecto */
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .modal-overlay.visible {
+        display: flex;
+        opacity: 1;
+      }
+
+      .modal-content {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+
+      .modal-overlay.visible .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-content h2 {
+        margin-top: 0;
+        color: #39a900;
+      }
+
+      .modal-content p {
+        margin-bottom: 25px;
+        color: #333;
+        font-size: 1.1rem;
+      }
+
+      /* Estilos para el modo oscuro del modal */
+      body.dark .modal-content {
+        background-color: #2c2c2c;
+        border: 1px solid #444;
+      }
+
+      body.dark .modal-content h2 {
+        color: #6fe031;
+      }
+
+      body.dark .modal-content p {
+        color: #ddd;
+      }
+    </style>
+    <!-- FIN DE CORRECCIÓN: Estilos para el Modal -->
+  </head>
+
+  <body>
+    <canvas id="particles-canvas"></canvas>
+
+    <nav
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(57, 169, 0, 0.95);
+        color: white;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+      "
+    >
+      <div style="display: flex; align-items: center; gap: 15px">
+        <span style="font-weight: bold; font-size: 1.1em">SENA Olimpiadas</span>
+        {% if usuario %}
+        <span style="color: rgba(255, 255, 255, 0.8)"
+          >Bienvenido, {{ usuario.nombre }}</span
+        >
+        {% endif %}
+      </div>
+      <div style="display: flex; align-items: center; gap: 15px">
+        <a
+          href="/logout"
+          style="
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+          "
+          onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+          >Cerrar Sesión</a
+        >
+      </div>
+    </nav>
+
+    <main class="container-evaluaciones">
+      <header class="header">
+        <h1 class="title">
+          <span class="text-animate">Mis Olimpiadas</span>
+        </h1>
+        <p class="subtitle">
+          <span class="text-animate-delay"
+            >Aquí encontrarás los instrumentos que te han sido asignados.</span
+          >
+        </p>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="flashes">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %}
+
+      <div class="card-grid">
+        {% for tipo, examen in examenes.items() %} {% if examen %}
+        <div
+          class="card {% if examen.calificacion is not none and examen.calificacion > 0 %}completed{% endif %}"
+          data-evaluation="{{ tipo }}"
+        >
+          <div class="card-image">
+            <img
+              src="{{ url_for('static', filename='img/' + tipo + '.webp') }}"
+              alt="{{ tipo|capitalize }}"
+              onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/default.webp') }}';"
+            />
+          </div>
+          <div class="card-content">
+            <div class="card-info">
+              <h3>{{ examen.titulo }}</h3>
+              <p>Fase: {{ examen.fase }}</p>
+              <p>Duración: {{ examen.duracion }} minutos</p>
+              <p>
+                Disponible hasta: {{ examen.fecha_fin.strftime('%d/%m/%Y %H:%M')
+                }}
+              </p>
+              {% if examen.calificacion is not none %}
+              <p class="score">
+                <!-- MODIFICADO: Muestra la calificación sobre el puntaje máximo real del examen -->
+                <strong>Calificación: {{ examen.calificacion }} / {{ examen.puntaje_maximo or 0 }} Puntos</strong>
+              </p>
+              {% endif %}
+            </div>
+            <div class="card-action">
+              {% if examen.calificacion is none or examen.calificacion == 0 %}
+              <a
+                href="{{ url_for('prueba', tipo=tipo, id_instrumento=examen.id_instrumento) }}"
+                class="btn-start"
+                >Iniciar Examen</a
+              >
+              {% else %}
+              <span class="btn-completed">Completado</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %} {% else %}
+        <p>No tienes exámenes asignados en este momento.</p>
+        {% endfor %}
+      </div>
+    </main>
+
+    <div id="score-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2 id="score-title">¡Examen Terminado!</h2>
+        <p id="score-message"></p>
+        <div class="modal-buttons">
+          <button id="score-ok-btn" class="nav-btn modal-btn confirm-btn">
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      type="module"
+      src="{{ url_for('static', filename='js/aprendiz/theme-manager.js') }}"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Revisa si hay una calificación en la URL para mostrar el modal
+        const urlParams = new URLSearchParams(window.location.search);
+        const calificacion = urlParams.get("calificacion");
+
+        // Convertimos los datos de los exámenes de Jinja2 a un objeto JavaScript
+        // para poder buscar el puntaje máximo del examen recién completado.
+        const examenesData = {{ examenes | tojson | safe }};
+        const idInstrumento = urlParams.get("id_instrumento");
+        
+        if (calificacion !== null) { // Se muestra incluso si la calificación es 0
+          let puntajeMaximo = 0;
+          let examenEncontrado = null;
+
+          // Buscamos el examen por su ID para obtener el puntaje máximo
+          for (const tipo in examenesData) {
+              if (examenesData[tipo].id_instrumento == idInstrumento) {
+                  examenEncontrado = examenesData[tipo];
+                  break;
+              }
+          }
+          
+          if(examenEncontrado) {
+            puntajeMaximo = examenEncontrado.puntaje_maximo;
+          }
+
+          const modal = document.getElementById("score-modal");
+          const message = document.getElementById("score-message");
+          
+          // MODIFICADO: Ahora el modal también puede mostrar el puntaje sobre el total.
+          // Nota: Esto requiere que al finalizar el examen se redirija a una URL como:
+          // /aprendiz?calificacion=30&id_instrumento=24
+          if (puntajeMaximo > 0) {
+            message.textContent = `Tu puntuación final es: ${calificacion} / ${puntajeMaximo} Puntos.`;
+          } else {
+            // Si por alguna razón no se encuentra el puntaje máximo, se muestra solo lo obtenido.
+            message.textContent = `Tu puntuación final es: ${calificacion} Puntos.`;
+          }
+          
+          modal.classList.add("visible");
+
+          document
+            .getElementById("score-ok-btn")
+            .addEventListener("click", () => {
+              modal.classList.remove("visible");
+              // Limpia la URL para que no vuelva a aparecer el modal al recargar
+              window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+              );
+            });
+        }
+      });
+    </script>
+  </body>
+</html>
