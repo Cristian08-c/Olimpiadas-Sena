@@ -2,6 +2,8 @@
 import os
 import re
 from datetime import date
+from io import BytesIO
+from flask import abort, send_file 
 
 import mysql.connector
 import pandas as pd
@@ -476,3 +478,76 @@ def init_db():
         conn.close()
 
     return redirect(url_for("admin.fichas"))
+
+
+TIPOS = ("matematicas", "ortografia", "ingles")
+
+@bp.route("/ranking/exportar/<modo>")
+@role_required("admin")
+def exportar_ranking(modo):
+    if modo not in ("fase1", "fase2", "total"):
+        abort(404)
+    anio = request.args.get("anio", type=int, default=date.today().year)
+
+    conn = get_db_connection()
+    if not conn:
+        flash("Error de conexión a la base de datos.", "danger")
+        return redirect(url_for("admin.fichas"))
+    try:
+        cur = conn.cursor(dictionary=True)
+        cur.execute("""
+            SELECT i.tipo, i.`fase(1-2)` AS fase, i.id_instrumento,
+                   p.identificacion, p.nombre, p.apellido, m.id_ficha,
+                   a.calificacion, a.tiempo_tomado
+            FROM asignaciones a
+            JOIN instrumentos i ON a.id_instrumento = i.id_instrumento
+            JOIN matricula m ON a.id_matricula = m.id_matricula
+            JOIN personas p ON m.identificacion = p.identificacion
+            WHERE YEAR(i.fecha_creacion) = %s
+        """, (anio,))
+        filas = cur.fetchall()
+        cur.close()
+    finally:
+        conn.close()
+
+    df = pd.DataFrame(filas, columns=[
+        "tipo", "fase", "id_instrumento", "identificacion", "nombre",
+        "apellido", "id_ficha", "calificacion", "tiempo_tomado"])
+    # Evita duplicados (la tabla asignaciones no tiene clave única)
+    df = (df.sort_values("calificacion", ascending=False)
+            .drop_duplicates(["identificacion", "id_instrumento"]))
+    df["estado"] = df["tiempo_tomado"].apply(
+        lambda t: "Presentó" if pd.notna(t) else "Pendiente")
+
+    nombres = {"identificacion": "Identificación", "nombre": "Nombre",
+               "apellido": "Apellido", "id_ficha": "Ficha",
+               "calificacion": "Puntaje", "tiempo_tomado": "Tiempo (s)",
+               "estado": "Estado"}
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        if modo in ("fase1", "fase2"):
+            fase = 1 if modo == "fase1" else 2
+            for tipo in TIPOS:
+                sub = df[(df.fase == fase) & (df.tipo == tipo)].sort_values(
+                    ["calificacion", "tiempo_tomado"], ascending=[False, True])
+                out = sub[list(nombres)].rename(columns=nombres)
+                out.insert(0, "Posición", range(1, len(out) + 1))
+                out.to_excel(writer, sheet_name=tipo.capitalize(), index=False)
+        else:
+            base = ["identificacion", "nombre", "apellido", "id_ficha"]
+            piv = df.pivot_table(index=base, columns=["tipo", "fase"],
+                                 values="calificacion", aggfunc="max",
+                                 fill_value=0)
+            piv.columns = [f"{t.capitalize()} F{f}" for t, f in piv.columns]
+            piv["Puntaje total"] = piv.sum(axis=1)
+            piv["Tiempo total (s)"] = df.groupby(base)["tiempo_tomado"].sum()
+            piv = piv.reset_index().sort_values(
+                ["Puntaje total", "Tiempo total (s)"], ascending=[False, True])
+            piv = piv.rename(columns=nombres)
+            piv.insert(0, "Posición", range(1, len(piv) + 1))
+            piv.to_excel(writer, sheet_name="Total participantes", index=False)
+    buf.seek(0)
+    return send_file(
+        buf, as_attachment=True,
+        download_name=f"ranking_{modo}_{anio}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

@@ -133,7 +133,9 @@
                 class="btn-secondary"
                 onclick="return confirm('¿Actualizar estructura de base de datos?')"
               >
-                Actualizar BD
+                Actualizar BD <a href="{{ url_for('admin.exportar_ranking', modo='fase1') }}" class="btn-secondary">Excel Fase 1</a>
+                              <a href="{{ url_for('admin.exportar_ranking', modo='fase2') }}" class="btn-secondary">Excel Fase 2</a>
+                              <a href="{{ url_for('admin.exportar_ranking', modo='total') }}" class="btn-secondary">Excel Total</a>
               </a>
             </div>
           </div>
