@@ -188,7 +188,7 @@
             <div class="card-action">
               {% if examen.calificacion is none or examen.calificacion == 0 %}
               <a
-                href="{{ url_for('prueba', tipo=tipo, id_instrumento=examen.id_instrumento) }}"
+                href="{{ url_for('aprendiz.prueba', tipo=tipo, id_instrumento=examen.id_instrumento) }}"
                 class="btn-start"
                 >Iniciar Examen</a
               >

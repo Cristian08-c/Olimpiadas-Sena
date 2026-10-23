@@ -1157,7 +1157,7 @@
             const result = await response.json();
             if (result.success) {
               confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
-              window.location.href = `/aprendiz?calificacion=${result.calificacion}`;
+              window.location.href = `/aprendiz?calificacion=${result.calificacion}&id_instrumento=${idInstrumento}`;
             } else {
               alert(
                 `Error al finalizar el examen: ${
