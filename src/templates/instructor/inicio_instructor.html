@@ -43,9 +43,8 @@
                         <p>Tipo: {{ examen.tipo }} | Fase: {{ examen['fase(1-2)'] }} | Estado: {{ examen.estado }} | Año: {{ examen.fecha_creacion.year }}</p>
                     </div>
                     <div class="examen-acciones">
-                        <a href="{{ url_for('gestionar_examen', id_instrumento=examen.id_instrumento) }}" class="btn-gestionar">Gestionar</a>
-                        <a href="{{ url_for('ver_ranking', id_instrumento=examen.id_instrumento) }}" class="btn-ranking">Ver Ranking</a>
-                    </div>
+                        <a href="{{ url_for('instructor.gestionar_examen', id_instrumento=examen.id_instrumento) }}" class="btn-gestionar">Gestionar</a>
+                        <a href="{{ url_for('instructor.ver_ranking', id_instrumento=examen.id_instrumento) }}" class="btn-ranking">Ver Ranking</a>
                 </div>
                 {% endfor %}
             </div>
@@ -138,7 +137,7 @@
 
         async function crearExamen(datosExamen) {
             try {
-                const response = await fetch("{{ url_for('crear_examen') }}", {
+                const response = await fetch("{{ url_for('instructor.crear_examen') }}", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(datosExamen)
@@ -186,6 +185,7 @@
                     <p>Tipo: ${examen.tipo} | Fase: ${examen.fase} | Estado: ${examen.estado} | Año: ${examen.ano}</p>
                 </div>
                 <div class="examen-acciones">
+                    <!-- Hardcoded --!>
                     <a href="/examen/gestionar/${examen.id_instrumento}" class="btn-gestionar">Gestionar</a>
                     <a href="/ranking/${examen.id_instrumento}" class="btn-ranking">Ver Ranking</a>
                 </div>

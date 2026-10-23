@@ -72,7 +72,7 @@
                 </h5>
             </div>
             <div class="session-container">
-                 <a href="{{ url_for('inicio_instructor') }}" class="logout-button">← Volver</a>
+                 <a href="{{ url_for('instructor.inicio') }}" class="logout-button">← Volver</a>
             </div>
         </div>
         <div class="nav"></div>
@@ -369,7 +369,7 @@
                   btnConfirmar.textContent = 'Asignando...';
 
                   try {
-                      const response = await fetch("{{ url_for('asignar_fase2') }}", {
+                      const response = await fetch("{{ url_for('instructor.asignar_fase2') }}", {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify(data)

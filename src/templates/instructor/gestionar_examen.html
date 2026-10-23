@@ -159,7 +159,7 @@
         <button id="btn-asignar" class="btn btn-warning">Asignar Examen</button>
         {% if examen['fase(1-2)'] == 1 %}
         <a
-          href="{{ url_for('ver_ranking', id_instrumento=examen.id_instrumento) }}"
+          href="{{ url_for('instructor.ver_ranking', id_instrumento=examen.id_instrumento) }}"
           class="btn btn-info"
           >Ver Ranking</a
         >

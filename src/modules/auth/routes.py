@@ -13,7 +13,7 @@ from .bp import bp
 def index():
     if "user_role" in session:
         if session["user_role"] == "instructor":
-            return redirect(url_for("inicio_instructor"))
+            return redirect(url_for("instructor.inicio"))
         elif session["user_role"] == "aprendiz":
             return redirect(url_for("aprendiz.dashboard"))
         elif session["user_role"] == "admin":
@@ -54,7 +54,7 @@ def login():
             session["user_role"] = user["rol"]
 
             if user["rol"] == "instructor":
-                redirect_url = url_for("inicio_instructor")
+                redirect_url = url_for("instructor.inicio")
             elif user["rol"] == "aprendiz":
                 redirect_url = url_for("aprendiz.dashboard")
             elif user["rol"] == "admin":
