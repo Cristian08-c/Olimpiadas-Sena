@@ -36,13 +36,13 @@
         </div>
         <div class="header-nav">
           <nav>
-            <a href="{{ url_for('admin_dashboard') }}" class="nav-link active"
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link active"
               >Subir Archivo</a
             >
-            <a href="{{ url_for('admin_fichas') }}" class="nav-link"
+            <a href="{{ url_for('admin.fichas') }}" class="nav-link"
               >Ver Fichas</a
             >
-            <a href="{{ url_for('admin_instructores') }}" class="nav-link"
+            <a href="{{ url_for('admin.instructores') }}" class="nav-link"
               >Registrar Instructor</a
             >
           </nav>
@@ -65,7 +65,7 @@
           {% endif %} {% endwith %}
 
           <form
-            action="{{ url_for('upload_file') }}"
+            action="{{ url_for('admin.upload_file') }}"
             method="post"
             enctype="multipart/form-data"
             class="upload-form"

@@ -35,14 +35,14 @@
         </div>
         <div class="header-nav">
           <nav>
-            <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link"
               >Subir Archivo</a
             >
-            <a href="{{ url_for('admin_fichas') }}" class="nav-link"
+            <a href="{{ url_for('admin.fichas') }}" class="nav-link"
               >Ver Fichas</a
             >
             <a
-              href="{{ url_for('admin_instructores') }}"
+              href="{{ url_for('admin.instructores') }}"
               class="nav-link active"
               >Registrar Usuario</a
             >
@@ -67,7 +67,7 @@
           {% endif %} {% endwith %}
 
           <form
-            action="{{ url_for('admin_instructores') }}"
+            action="{{ url_for('admin.instructores') }}"
             method="post"
             class="registro-form"
           >

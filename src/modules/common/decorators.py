@@ -3,7 +3,7 @@
 Reemplazan las comprobaciones manuales tipo:
 
     if 'user_role' not in session or session['user_role'] != 'admin':
-        return redirect(url_for('index'))
+        return redirect(url_for('auth.index'))
 
 por:
 
@@ -23,7 +23,7 @@ def login_required(fn):
     def wrapper(*args, **kwargs):
         if "user_role" not in session:
             flash("Debes iniciar sesión para acceder.", "warning")
-            return redirect(url_for("index"))
+            return redirect(url_for("auth.index"))
         return fn(*args, **kwargs)
     return wrapper
 

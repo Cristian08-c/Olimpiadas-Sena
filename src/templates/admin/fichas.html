@@ -109,13 +109,13 @@
         </div>
         <div class="header-nav">
           <nav>
-            <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link"
               >Subir Archivo</a
             >
-            <a href="{{ url_for('admin_fichas') }}" class="nav-link active"
+            <a href="{{ url_for('admin.fichas') }}" class="nav-link active"
               >Ver Fichas</a
             >
-            <a href="{{ url_for('admin_instructores') }}" class="nav-link"
+            <a href="{{ url_for('admin.instructores') }}" class="nav-link"
               >Registrar Instructor</a
             >
           </nav>
@@ -129,7 +129,7 @@
             <div class="stats">
               <span class="stat-item">Total: {{ fichas|length }} fichas</span>
               <a
-                href="{{ url_for('init_db') }}"
+                href="{{ url_for('admin.init_db') }}"
                 class="btn-secondary"
                 onclick="return confirm('¿Actualizar estructura de base de datos?')"
               >
@@ -186,7 +186,7 @@
                   <div class="ficha-actions">
                     {% if ficha.activo %}
                     <a
-                      href="{{ url_for('ver_ficha', ficha_num=ficha.id_ficha) }}"
+                      href="{{ url_for('admin.ver_ficha', ficha_num=ficha.id_ficha) }}"
                       class="btn-view"
                       >Ver Aprendices</a
                     >
@@ -199,14 +199,14 @@
                     >
                     {% endif %} {% if ficha.activo %}
                     <a
-                      href="{{ url_for('toggle_ficha', ficha_id=ficha.id_ficha) }}"
+                      href="{{ url_for('admin.toggle_ficha', ficha_id=ficha.id_ficha) }}"
                       class="btn-toggle btn-disable"
                       onclick="return confirm('¿Estás seguro de deshabilitar esta ficha?')"
                       >Deshabilitar</a
                     >
                     {% else %}
                     <a
-                      href="{{ url_for('toggle_ficha', ficha_id=ficha.id_ficha) }}"
+                      href="{{ url_for('admin.toggle_ficha', ficha_id=ficha.id_ficha) }}"
                       class="btn-toggle btn-enable"
                       onclick="return confirm('¿Estás seguro de habilitar esta ficha?')"
                       >Habilitar</a

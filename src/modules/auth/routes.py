@@ -17,7 +17,7 @@ def index():
         elif session["user_role"] == "aprendiz":
             return redirect(url_for("aprendiz_dashboard"))
         elif session["user_role"] == "admin":
-            return redirect(url_for("admin_dashboard"))
+            return redirect(url_for("admin.dashboard"))
 
     return render_template("index.html")
 
@@ -58,7 +58,7 @@ def login():
             elif user["rol"] == "aprendiz":
                 redirect_url = url_for("aprendiz_dashboard")
             elif user["rol"] == "admin":
-                redirect_url = url_for("admin_dashboard")
+                redirect_url = url_for("admin.dashboard")
             else:
                 redirect_url = url_for("auth.index")
 

@@ -37,13 +37,13 @@
         </div>
         <div class="header-nav">
           <nav>
-            <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link"
               >Subir Archivo</a
             >
-            <a href="{{ url_for('admin_fichas') }}" class="nav-link"
+            <a href="{{ url_for('admin.fichas') }}" class="nav-link"
               >Ver Fichas</a
             >
-            <a href="{{ url_for('admin_instructores') }}" class="nav-link"
+            <a href="{{ url_for('admin.instructores') }}" class="nav-link"
               >Registrar Instructor</a
             >
           </nav>
@@ -54,7 +54,7 @@
         <div class="aprendices-section">
           <div class="section-header">
             <div class="breadcrumb">
-              <a href="{{ url_for('admin_fichas') }}">Fichas</a>
+              <a href="{{ url_for('admin.fichas') }}">Fichas</a>
               <span>/</span>
               <span>Ficha {{ ficha.id_ficha }}</span>
             </div>
@@ -124,7 +124,7 @@
                   {% if aprendiz.activo %}
                   <!-- Si está activo (True), mostrar botón para deshabilitar -->
                   <a
-                    href="{{ url_for('toggle_aprendiz', ficha_id=ficha.id_ficha, aprendiz_id=aprendiz.identificacion) }}"
+                    href="{{ url_for('admin.toggle_aprendiz', ficha_id=ficha.id_ficha, aprendiz_id=aprendiz.identificacion) }}"
                     class="btn-toggle-small btn-disable-small"
                     onclick="return confirm('¿Estás seguro de deshabilitar a {{ aprendiz.nombre }} {{ aprendiz.apellido }}?')"
                     >Deshabilitar</a
@@ -132,7 +132,7 @@
                   {% else %}
                   <!-- Si no está activo (False), mostrar botón para habilitar -->
                   <a
-                    href="{{ url_for('toggle_aprendiz', ficha_id=ficha.id_ficha, aprendiz_id=aprendiz.identificacion) }}"
+                    href="{{ url_for('admin.toggle_aprendiz', ficha_id=ficha.id_ficha, aprendiz_id=aprendiz.identificacion) }}"
                     class="btn-toggle-small btn-enable-small"
                     onclick="return confirm('¿Estás seguro de habilitar a {{ aprendiz.nombre }} {{ aprendiz.apellido }}?')"
                     >Habilitar</a
